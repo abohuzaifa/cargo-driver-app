@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 class CurvedBottomClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    // I've taken approximate height of curved part of view
-    // Change it if you have exact spec for it
     final roundingHeight = size.height * 3 / 5;
 
     // this is top part of path, rectangle without any rounding

@@ -30,7 +30,7 @@ class NewTripNotificationPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text('Driver Accepted Your Request'),
+                  const Text('User Accepted Your Request'),
                   SizedBox(
                     height: 50.h,
                   ),

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../home/driver_tracking_screen.dart';
+import '../home/find_trip_online.dart';
 
 class ParcelPickPage extends StatelessWidget {
   const ParcelPickPage({super.key});

@@ -1,7 +1,9 @@
+import 'package:cargo_driver_app/home/find_trip_online.dart';
+import 'package:cargo_driver_app/profile/update_profile.dart';
+
 import '../../alltrips/all_trip_page.dart';
 import '../../wallet/wallet_page.dart';
-import '../../home/home_screen.dart';
-import '../../profile/profile_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -16,10 +18,10 @@ class _BottomBarScreenState extends State<BottomBarScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    HomeScreen(),
+    const FindTripOnline(),
     const WalletPage(),
     const AllTripsPage(),
-    const ProfilePage(),
+    UpdateProfile()
   ];
   @override
   Widget build(BuildContext context) {

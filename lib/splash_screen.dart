@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:cargo_driver_app/api/auth_controller.dart';
+import 'package:cargo_driver_app/home/confirm_location_screen.dart';
+
 import '../../constant/colors_utils.dart';
 import '../../welcome_screen.dart';
 import 'package:flutter/material.dart';
@@ -17,8 +20,10 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      Future.delayed(const Duration(seconds: 3), () {
-        Get.offAll(() => const WelcomeScreen());
+      Future.delayed(const Duration(seconds: 2), () {
+        Get.offAll(() => Get.find<AuthController>().isLogedIn()
+            ? const LocationPage()
+            : const WelcomeScreen());
       });
     });
   }
@@ -41,13 +46,16 @@ class _SplashScreenState extends State<SplashScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'طرد دریفر',
-                  style: TextStyle(fontFamily: 'RadioCanada'),
+                  style: TextStyle(
+                      fontFamily: 'RadioCanada',
+                      fontSize: 50,
+                      color: textcyanColor),
                 ),
                 Text(
                   'Tarud Driver',
-                  style: TextStyle(color: Colors.white, fontSize: 22.sp),
+                  style: TextStyle(color: textcyanColor, fontSize: 22.sp),
                 ),
               ],
             ),

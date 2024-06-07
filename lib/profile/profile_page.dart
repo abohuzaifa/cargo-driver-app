@@ -1,4 +1,7 @@
+import 'package:cargo_driver_app/api/auth_controller.dart';
+import 'package:cargo_driver_app/home/home_screen.dart';
 import 'package:cargo_driver_app/home/vehicle_setting.dart';
+import 'package:cargo_driver_app/profile/controller/profile_controller.dart';
 
 import '../../alltrips/all_trip_page.dart';
 import '../../notification/notifcation_page.dart';
@@ -53,14 +56,30 @@ class ProfilePage extends StatelessWidget {
                     height: 30.h,
                   ),
                   Text(
-                    'Abdullah',
+                    Get.find<AuthController>().getLoginUserData()?.user?.name ??
+                        '',
                     style: TextStyle(fontSize: 20.sp),
                   ),
                 ],
               ),
             ),
             SizedBox(
-              height: 50.h,
+              height: 20.h,
+            ),
+            ListTile(
+              onTap: () => Get.to(() => const HomeScreen()),
+              dense: true,
+              leading: Image.asset(
+                'assets/images/profile_icon.png',
+                color: Colors.black,
+                height: 20.h,
+                width: 20.h,
+              ),
+              title: Text(
+                'DashBoard',
+                style: TextStyle(fontSize: 16.sp),
+              ),
+              trailing: const Icon(Icons.keyboard_arrow_right),
             ),
             ListTile(
               onTap: () => Get.to(() => UpdateProfile()),
@@ -78,7 +97,7 @@ class ProfilePage extends StatelessWidget {
               trailing: const Icon(Icons.keyboard_arrow_right),
             ),
             ListTile(
-              onTap: () => Get.to(() => const VehicleSettingPage()),
+              onTap: () => Get.to(() => VehicleSettingPage()),
               dense: true,
               leading: Image.asset(
                 'assets/images/setting.png',
@@ -140,7 +159,10 @@ class ProfilePage extends StatelessWidget {
             ListTile(
               onTap: () => buildDialog(
                   onPress1: Get.back,
-                  onPress2: Get.back,
+                  onPress2: () async {
+                    Get.back();
+                    await Get.find<ProfileController>().deleteAccount();
+                  },
                   btntext1: 'No',
                   btntext2: 'Yes',
                   btnColor2: Colors.redAccent,
@@ -167,8 +189,13 @@ class ProfilePage extends StatelessWidget {
             const Spacer(),
             InkWell(
               onTap: () => buildDialog(
-                  onPress1: Get.back,
-                  onPress2: Get.back,
+                  onPress1: () {
+                    Get.back();
+                  },
+                  onPress2: () async {
+                    Get.back();
+                    await Get.find<ProfileController>().logout();
+                  },
                   btntext1: 'No',
                   btntext2: 'Yes',
                   height: 40,

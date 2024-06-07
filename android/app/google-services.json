@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "990392568575",
+    "project_id": "cargo-driver-app-a6c10",
+    "storage_bucket": "cargo-driver-app-a6c10.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:990392568575:android:3f311d25f69986c8a09aca",
+        "android_client_info": {
+          "package_name": "com.tarudDriver.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgUYf7FDcuvD5_v1kQjF1l1fPN9Xvs2M0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

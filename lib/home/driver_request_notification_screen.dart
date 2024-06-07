@@ -1,29 +1,24 @@
+import 'package:cargo_driver_app/api/user_repo.dart';
+
+import 'package:cargo_driver_app/home/controller/ridetrcaking_controller.dart';
+
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import '../../constant/colors_utils.dart';
 
-import '../../home/payment_screen.dart';
 import '../../widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-class DriverRequestNotificationScreen extends StatefulWidget {
-  const DriverRequestNotificationScreen({super.key});
+import 'bottom_navbar.dart';
 
-  @override
-  State<DriverRequestNotificationScreen> createState() =>
-      _DriverRequestNotificationScreenState();
-}
+class DriverRequestNotificationScreen extends StatelessWidget {
+  const DriverRequestNotificationScreen({
+    super.key,
+  });
 
-class _DriverRequestNotificationScreenState
-    extends State<DriverRequestNotificationScreen> {
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration.zero, () {
-      requestAlert();
-    });
-  }
-
+// "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko",
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -40,99 +35,71 @@ class _DriverRequestNotificationScreenState
           ),
         ),
         child: Scaffold(
-            bottomSheet: Container(
-              decoration: BoxDecoration(
-                  color: curvedBlueColor.withOpacity(0.76),
-                  borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20))),
-              child: Padding(
-                padding: const EdgeInsets.all(30.0),
-                child: CustomButton(buttonText: "Proceed", onPress: () {}),
-              ),
+            bottomSheet: Padding(
+              padding: const EdgeInsets.all(30.0),
+              child: CustomButton(
+                  buttonText: "Proceed",
+                  onPress: () {
+                    Get.to(() => const BottomBarScreen());
+                  }),
             ),
             backgroundColor: Colors.transparent,
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 50.h),
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            body: GetX(
+                init: RideTrackingController(userRepo: UserRepo()),
+                builder: (controller) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                          onTap: () {},
-                          child: const Icon(
-                            Icons.menu,
-                            color: Colors.white,
-                          )),
-                      GestureDetector(
-                          onTap: () {},
-                          child: const Icon(
-                            Icons.search,
-                            color: Colors.white,
-                          )),
+                      SizedBox(height: 50.h),
+                      Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                                onTap: () {},
+                                child: const Icon(
+                                  Icons.menu,
+                                  color: Colors.white,
+                                )),
+                            GestureDetector(
+                                onTap: () {},
+                                child: const Icon(
+                                  Icons.search,
+                                  color: Colors.white,
+                                )),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      Expanded(
+                        child: Container(
+                          foregroundDecoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.center,
+                              colors: [
+                                bgColor,
+                                bgColor.withOpacity(0.5),
+                              ],
+                            ),
+                          ),
+                          child: GoogleMap(
+                            markers: controller.markers,
+                            polylines: controller.polylines,
+                            compassEnabled: false,
+                            onCameraMove: controller.onCameraMove,
+                            initialCameraPosition: CameraPosition(
+                                target: LatLng(controller.latitude.value,
+                                    controller.longitude.value),
+                                zoom: 14),
+                            onMapCreated: controller.onCreated,
+                            onCameraIdle: () async {},
+                          ),
+                        ),
+                      )
                     ],
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                Expanded(
-                    child: Image.asset(
-                  "assets/images/map_img.png",
-                  width: Get.width,
-                  fit: BoxFit.fill,
-                ))
-              ],
-            )));
-  }
-
-  requestAlert() {
-    showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10.0))),
-            insetPadding: const EdgeInsets.only(left: 20, right: 20),
-            backgroundColor: Colors.white,
-            title: Column(
-              children: [
-                Image.asset(
-                  "assets/images/trruck_circular.png",
-                  height: 44.h,
-                  width: 44.w,
-                  fit: BoxFit.cover,
-                ),
-                SizedBox(height: 20.h),
-                Text(
-                  'Your Request Sent',
-                  style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: curvedBlueColor),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  'We have sent your Delivery Request to your nearby diver',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: curvedBlueColor),
-                ),
-                SizedBox(height: 20.h),
-                CustomButton(
-                  buttonText: "OK",
-                  onPress: () {
-                    Get.to(() => const PaymentScreen());
-                  },
-                  width: 97.w,
-                  height: 38.h,
-                )
-              ],
-            ),
-          );
-        });
+                  );
+                })));
   }
 }

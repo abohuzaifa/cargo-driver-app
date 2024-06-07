@@ -1,4 +1,4 @@
-package com.example.cargo_driver_app
+package com.tarudDriver.app
 
 import io.flutter.embedding.android.FlutterActivity
 

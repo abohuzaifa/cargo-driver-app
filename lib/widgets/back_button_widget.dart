@@ -5,6 +5,7 @@ import 'package:get/get_rx/src/rx_typedefs/rx_typedefs.dart';
 
 Widget buildBackButton(BuildContext context,
     {Callback? onTap,
+    Callback? onSearch,
     String? title,
     bool? isTitle,
     bool? isAction,
@@ -32,7 +33,11 @@ Widget buildBackButton(BuildContext context,
             title ?? '',
             style: TextStyle(color: color ?? textcyanColor, fontSize: 16.sp),
           ),
-        if (isAction == true) const Icon(Icons.search)
+        if (isAction == true)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: InkWell(onTap: onSearch, child: const Icon(Icons.search)),
+          )
       ],
     ),
   );
