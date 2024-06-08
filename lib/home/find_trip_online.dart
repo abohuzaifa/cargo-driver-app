@@ -127,76 +127,74 @@ class _FindTripOnlineState extends State<FindTripOnline> {
               ? newRequest(_trips, _scrollController)
               : Container(),
           requestReceived.value == true
-              ? Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+              ?
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1), // Margin adjusted for mobile devices
+            height: MediaQuery.of(context).size.height * 0.4, // Height adjusted for mobile devices
+            width: MediaQuery.of(context).size.width * 0.8, // Width adjusted for mobile devices
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Received New Request',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  height: 300,
-                  width: MediaQuery.of(context).size.width / 2,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                  SizedBox(height: 20),
+                  Container(
+                    margin: EdgeInsets.only(
+                      left: 20,right: 20
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Received New Request',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.06, // Height adjusted for mobile devices
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Handle accept action
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey, // Set the button color here
+                              ),
+                              child: Text('Accept',style: TextStyle(color: Colors.white)),
+                            ),
                           ),
                         ),
-                        SizedBox(height: 30),
-                        Container(
-                          margin: EdgeInsets.only(left: 30, right: 30),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: SizedBox(
-                                  height: 50, // Set the desired height here
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      // Handle accept action
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors
-                                          .grey, // Set the button color here
-                                    ),
-                                    child: Text(
-                                      'Accept',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
+                        SizedBox(width: MediaQuery.of(context).size.width * 0.05), // Width adjusted for mobile devices
+                        Expanded(
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.06, // Height adjusted for mobile devices
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Handle reject action
+                                setState(() {
+                                  requestReceived.value=false;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueGrey, // Set the button color here
                               ),
-                              SizedBox(width: 20),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 50, // Set the desired height here
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        requestReceived.value = false;
-                                      }); // Handle reject action
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors
-                                          .blueGrey, // Set the button color here
-                                    ),
-                                    child: Text(
-                                      'Reject',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                              child: Text('Reject',style: TextStyle(color: Colors.white),),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                )
+                ],
+              ),
+            ),
+          )
+
               : Container()
         ],
       ),
