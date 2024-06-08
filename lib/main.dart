@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'bindings/contorller_binding.dart';
 import 'fcm_handle.dart';
 
+RxBool receivedReq=false.obs;
 String? fcmToken;
 
 Future<String?> getFCMToken() async {

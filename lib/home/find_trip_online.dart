@@ -1,20 +1,26 @@
 import 'package:dotted_line/dotted_line.dart';
+import 'package:firebase_messaging_platform_interface/src/remote_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:get/get_rx/get_rx.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../alltrips/controller/find_trip_controller.dart';
 import '../alltrips/model/find_tripmodel.dart';
 import '../api/api_constants.dart';
 import '../constant/colors_utils.dart';
+import '../main.dart';
 import '../profile/profile_page.dart';
 import '../widgets/custom_button.dart';
 import 'controller/location_controller.dart';
 import 'controller/ridetrcaking_controller.dart';
 
 class FindTripOnline extends StatefulWidget {
-  const FindTripOnline({super.key});
+  final RemoteMessage?
+      message; // Define a nullable variable to store the message
+
+  FindTripOnline({Key? key, this.message}) : super(key: key);
 
   @override
   State<FindTripOnline> createState() => _FindTripOnlineState();
@@ -26,12 +32,20 @@ class _FindTripOnlineState extends State<FindTripOnline> {
   int _currentPage = 1;
   final List<TripData> _trips = [];
   bool _isLoading = false;
+  RxBool requestReceived = false.obs;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
     _loadTrips();
+    if (widget.message != null) {
+      print('In Ui message');
+
+      requestReceived.value = true;
+    } else {
+      print('In Ui no message');
+    }
   }
 
   void _scrollListener() {
@@ -90,6 +104,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
         child: ProfilePage(),
       ),
       body: Stack(
+        alignment: Alignment.center,
         children: [
           Container(
             foregroundDecoration: BoxDecoration(
@@ -108,7 +123,81 @@ class _FindTripOnlineState extends State<FindTripOnline> {
               onCameraIdle: () async {},
             ),
           ),
-          newRequest(_trips, _scrollController),
+          requestReceived.value == false
+              ? newRequest(_trips, _scrollController)
+              : Container(),
+          requestReceived.value == true
+              ? Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  height: 300,
+                  width: MediaQuery.of(context).size.width / 2,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Received New Request',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 30),
+                        Container(
+                          margin: EdgeInsets.only(left: 30, right: 30),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 50, // Set the desired height here
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      // Handle accept action
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors
+                                          .grey, // Set the button color here
+                                    ),
+                                    child: Text(
+                                      'Accept',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 20),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 50, // Set the desired height here
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        requestReceived.value = false;
+                                      }); // Handle reject action
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors
+                                          .blueGrey, // Set the button color here
+                                    ),
+                                    child: Text(
+                                      'Reject',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Container()
         ],
       ),
     );

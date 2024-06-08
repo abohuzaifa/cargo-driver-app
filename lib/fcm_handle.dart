@@ -1,11 +1,19 @@
 import 'dart:developer';
+import 'dart:ffi';
 import 'dart:io';
 
+import 'package:cargo_driver_app/home/find_trip_online.dart';
+import 'package:cargo_driver_app/home/home_screen.dart';
+import 'package:cargo_driver_app/profile/profile_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'home/bottom_navbar.dart';
+import 'main.dart';
 
 class MessagingService {
   static String? fcmToken; // Variable to store the FCM token
@@ -71,44 +79,64 @@ class MessagingService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       debugPrint('Got a message whilst in the foreground!');
 
-      debugPrint('Message data: ${message.notification?.title.toString()}');
+      // Check if the message contains a notification
       if (message.notification != null) {
-        if (message.notification?.title != null &&
-            message.notification?.body != null) {
-          // final notificationData = message.data;
-          // final screen = notificationData['screen'];
-          await _fcm.setForegroundNotificationPresentationOptions(
-              alert: true, sound: true, badge: true);
-          const AndroidNotificationChannel channel = AndroidNotificationChannel(
-            'high_importance_channel', // id
-            'High Importance Notifications', // title
-            description:
-                'This channel is used for important notifications.', // description
-            importance: Importance.max, playSound: true,
-          );
-          await _notificationsPlugin
-              .resolvePlatformSpecificImplementation<
-                  AndroidFlutterLocalNotificationsPlugin>()
-              ?.createNotificationChannel(channel);
-          RemoteNotification? notification = message.notification;
-          AndroidNotification? android = message.notification?.android;
-          if (android != null) {
-            _notificationsPlugin.show(
-                notification.hashCode,
-                notification?.title,
-                notification?.body,
-                NotificationDetails(
-                  android: AndroidNotificationDetails(
-                    channel.id,
-                    channel.name,
-                    channelDescription: channel.description,
-                    icon: android.smallIcon,
-                    // other properties...
-                  ),
-                ));
-          }
+        RemoteNotification? notification = message.notification;
+        AndroidNotification? android = message.notification?.android;
+
+        // Print notification title and body
+        debugPrint('Notification title: ${notification?.title}');
+        debugPrint('Notification body: ${notification?.body}');
+        print('Notification Title: ${notification?.title}');
+        print('Notification Body: ${notification?.body}');
+
+        // Set foreground notification presentation options
+        await _fcm.setForegroundNotificationPresentationOptions(
+            alert: true, sound: true, badge: true);
+
+        // Create notification channel
+        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+          'high_importance_channel', // id
+          'High Importance Notifications', // title
+          description: 'This channel is used for important notifications.',
+          // description
+          importance: Importance.max,
+          playSound: true,
+        );
+
+        await _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
+            ?.createNotificationChannel(channel);
+
+        // Show notification if Android specific notification is available
+        if (android != null) {
+          _notificationsPlugin.show(
+              notification.hashCode,
+              notification!.title,
+              notification.body,
+              NotificationDetails(
+                android: AndroidNotificationDetails(
+                  channel.id,
+                  channel.name,
+                  channelDescription: channel.description,
+                  icon: android.smallIcon,
+                  // other properties...
+                ),
+              ));
         }
+      } else {
+        debugPrint('Notification is null');
       }
+
+      // Check if the message contains data
+      if (message.data.isNotEmpty) {
+        debugPrint('Message data: ${message.data}');
+        print('Message Data: ${message.data}');
+      } else {
+        debugPrint('Message data is empty');
+      }
+      _handleNotificationClick(context, message);
     });
 
     LocalNoticationsService(_notificationsPlugin).init();
@@ -125,6 +153,8 @@ class MessagingService {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       debugPrint(
           'onMessageOpenedApp: ${message.notification!.title.toString()}');
+      // Print notification title and body
+      debugPrint('Notification body: ${message.notification!.body}');
 
       _handleNotificationClick(context, message);
     });
@@ -132,27 +162,58 @@ class MessagingService {
 
   // Handling a notification click event by navigating to the specified screen
   void _handleNotificationClick(BuildContext context, RemoteMessage message) {
-    final notificationData = message.data;
-    if (notificationData.containsKey('screen')) {
-      final screen = notificationData['screen'];
-      Navigator.of(context).pushNamed(screen);
+    // Check if the message contains data
+    if (message.data.isNotEmpty) {
+      debugPrint('Message data: ${message.data}');
+      print('Message Data: ${message.data}');
+      Get.offAll(FindTripOnline(message: message)); // Close all previous routes and navigate to FindTripOnline
+    } else {
+      debugPrint('Message data is empty');
     }
+    // final notificationData = message.data;
+    // if (notificationData.containsKey('screen')) {
+    //   final screen = notificationData['screen'];
+    //   Navigator.of(context).pushNamed(screen);
+    // }
   }
 }
 
 // Handler for background messages
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  debugPrint('Handling a background message: ${message.notification!.title}');
+  // Initialize Firebase to ensure it can be used in the background
+
+  debugPrint('Handling a background message: ${message.messageId}');
+
+  // Check if the message contains a notification
+  if (message.notification != null) {
+    RemoteNotification? notification = message.notification;
+
+    // Print notification title and body
+    debugPrint('Notification title: ${notification?.title}');
+    debugPrint('Notification body: ${notification?.body}');
+    print('Notification Title: ${notification?.title}');
+    print('Notification Body: ${notification?.body}');
+  } else {
+    debugPrint('Notification is null');
+  }
+
+  // Check if the message contains data
+  if (message.data.isNotEmpty) {
+    debugPrint('Message data: ${message.data}');
+    print('Message Data: ${message.data}');
+  } else {
+    debugPrint('Message data is empty');
+  }
 }
 
 class LocalNoticationsService {
   LocalNoticationsService(
     this._notificationsPlugin,
   );
+
   final FlutterLocalNotificationsPlugin _notificationsPlugin;
+
   Future init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings(

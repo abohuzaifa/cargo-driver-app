@@ -79,7 +79,7 @@ class HomeScreen extends StatelessWidget {
                                       children: [
                                         InkWell(
                                           onTap: () {
-                                            Get.to(() => const FindTripOnline());
+                                            Get.to(() =>  FindTripOnline());
                                           },
                                           child: Container(
                                               margin: const EdgeInsets.all(5),
@@ -163,7 +163,7 @@ class HomeScreen extends StatelessWidget {
                                     Expanded(
                                       child: InkWell(
                                         onTap: () {
-                                          Get.to(() => const FindTripOnline());
+                                          Get.to(() =>  FindTripOnline());
                                         },
                                         child: Container(
                                             margin: const EdgeInsets.all(5),
