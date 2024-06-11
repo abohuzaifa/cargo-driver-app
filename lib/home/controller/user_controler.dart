@@ -1,5 +1,6 @@
 import 'package:cargo_driver_app/api/api_constants.dart';
 import 'package:cargo_driver_app/api/user_repo.dart';
+import 'package:cargo_driver_app/auth_screen/login_screen.dart';
 import 'package:cargo_driver_app/models/current_ride_model.dart';
 import 'package:cargo_driver_app/models/wallet_model.dart';
 import 'package:cargo_driver_app/util/apputils.dart';
@@ -101,7 +102,7 @@ class UserContorller extends GetxController implements GetxService {
         long: long);
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       AppUtils.showDialog('Data Updated', () {
-        Get.back();
+        Get.offAll(()=>LoginScreen());
       });
     } else {
       AppUtils.showDialog(response['message'], () {

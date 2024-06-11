@@ -109,12 +109,12 @@ class UpdateProfile extends StatelessWidget {
                             height: 10.h,
                           ),
                           CustomTextField(
-                            validator: (p0) {
-                              if (p0!.isEmpty || p0.length < 6) {
-                                return 'Enter valid password';
-                              }
-                              return null;
-                            },
+                            // validator: (p0) {
+                            //   if (p0!.isEmpty || p0.length < 6) {
+                            //     return 'Enter valid password';
+                            //   }
+                            //   return null;
+                            // },
                             controller: controller.passwordController,
                             hintText: 'Password',
                           ),
@@ -122,13 +122,13 @@ class UpdateProfile extends StatelessWidget {
                             height: 10.h,
                           ),
                           CustomTextField(
-                            validator: (p0) {
-                              if (p0!.isEmpty ||
-                                  p0 != controller.passwordController.text) {
-                                return 'password don\'t match';
-                              }
-                              return null;
-                            },
+                            // validator: (p0) {
+                            //   if (p0!.isEmpty ||
+                            //       p0 != controller.passwordController.text) {
+                            //     return 'password don\'t match';
+                            //   }
+                            //   return null;
+                            // },
                             controller: controller.confirmPassController,
                             hintText: 'Confirm Password',
                           ),
