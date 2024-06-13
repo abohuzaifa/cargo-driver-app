@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyCQREp5_Ddt9tTvC7c4bTp2T2PEM6MBkt8</string>
+	<string>AIzaSyCJLxswhmOpwUX1Gjry2CakBe8jdlrvbvs</string>
 	<key>GCM_SENDER_ID</key>
-	<string>705442055445</string>
+	<string>990392568575</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.iOS.cargoDriverApp</string>
+	<string>com.tarudDriver.app</string>
 	<key>PROJECT_ID</key>
-	<string>cargo-driver-app-8bedd</string>
+	<string>cargo-driver-app-a6c10</string>
 	<key>STORAGE_BUCKET</key>
-	<string>cargo-driver-app-8bedd.appspot.com</string>
+	<string>cargo-driver-app-a6c10.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:705442055445:ios:85a0a4dc35a7332753151c</string>
+	<string>1:990392568575:ios:2a18ea6eaeefd4c5a09aca</string>
 </dict>
 </plist>
