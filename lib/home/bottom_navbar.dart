@@ -18,7 +18,7 @@ class _BottomBarScreenState extends State<BottomBarScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const FindTripOnline(),
+     FindTripOnline(),
     const WalletPage(),
     const AllTripsPage(),
     UpdateProfile()

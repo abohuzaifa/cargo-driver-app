@@ -8,8 +8,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'bindings/contorller_binding.dart';
 import 'fcm_handle.dart';
+import 'home/find_trip_online.dart';
 
+RxBool receivedReq = false.obs;
 String? fcmToken;
+
 
 Future<String?> getFCMToken() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -61,11 +64,32 @@ class CargoDeleiveryApp extends StatefulWidget {
 
 class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> {
   final _messagingService = MessagingService();
+  RemoteMessage? _initialMessage;
+
+  void _setupInteractedMessage() async {
+    // Get the initial message
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    // If the initial message is not null, it means the app was opened via a notification
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+
+    // Handle interaction when app is in background
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+  }
+
+  void _handleMessage(RemoteMessage message) {
+    // Navigate to the desired screen with the message data
+    Get.to(() => FindTripOnline(message: message));
+  }
 
   @override
   void initState() {
     _messagingService.init(context);
     super.initState();
+    _setupInteractedMessage();
   }
 
   // This widget is the root of your application.
@@ -77,8 +101,11 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> {
         builder: (_, child) {
           return GetMaterialApp(
             initialBinding: Binding(),
-            initialRoute: '/',
-            themeMode: ThemeMode.light,
+            initialRoute: _initialMessage != null ? '/findTrip' : '/',
+            // getPages: [
+            //   GetPage(name: '/', page: () => HomeScreen()),
+            //   GetPage(name: '/findTrip', page: () => FindTripOnline(message: _initialMessage)),
+            // ],            themeMode: ThemeMode.light,
             theme: ThemeData(
               fontFamily: 'RadioCanada',
             ),
