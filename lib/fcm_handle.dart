@@ -13,6 +13,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home/bottom_navbar.dart';
+import 'home/driver_request_notification_screen.dart';
 import 'main.dart';
 
 class MessagingService {
@@ -163,10 +164,24 @@ class MessagingService {
   // Handling a notification click event by navigating to the specified screen
   void _handleNotificationClick(BuildContext context, RemoteMessage message) {
     // Check if the message contains data
+    if (message.notification!.title == 'New request') {
+      Get.offAll(() => BottomBarScreen());
+      Get.to(() => FindTripOnline(message: message));
+    } else if (message.notification!.title == 'Accept Offer') {
+      Get.offAll(() => BottomBarScreen());
+      Get.to(() => DriverRequestNotificationScreen(message: message));
+    }
     if (message.data.isNotEmpty) {
       debugPrint('Message data: ${message.data}');
       print('Message Data: ${message.data}');
-      Get.offAll(FindTripOnline(message: message)); // Close all previous routes and navigate to FindTripOnline
+      if (message.notification!.title == 'New request') {
+        Get.offAll(() => BottomBarScreen());
+        Get.to(() => FindTripOnline(message: message));
+      } else if (message.notification!.title == 'Accept Offer') {
+        Get.offAll(() => BottomBarScreen());
+        Get.to(() => DriverRequestNotificationScreen(message: message));
+      }
+
     } else {
       debugPrint('Message data is empty');
     }

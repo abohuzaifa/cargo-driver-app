@@ -1,6 +1,7 @@
 import 'package:cargo_driver_app/api/user_repo.dart';
 
 import 'package:cargo_driver_app/home/controller/ridetrcaking_controller.dart';
+import 'package:firebase_messaging_platform_interface/src/remote_message.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -15,7 +16,7 @@ import 'bottom_navbar.dart';
 
 class DriverRequestNotificationScreen extends StatelessWidget {
   const DriverRequestNotificationScreen({
-    super.key,
+    super.key, RemoteMessage? message,
   });
 
 // "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko",

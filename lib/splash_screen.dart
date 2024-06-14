@@ -1,15 +1,14 @@
-import 'dart:async';
-import 'package:cargo_driver_app/api/auth_controller.dart';
-import 'package:cargo_driver_app/home/confirm_location_screen.dart';
 
-import '../../constant/colors_utils.dart';
-import '../../welcome_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
+
+import 'constant/colors_utils.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final VoidCallback onInitializationComplete;
+
+  const SplashScreen({super.key, required this.onInitializationComplete});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -21,9 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       Future.delayed(const Duration(seconds: 2), () {
-        Get.offAll(() => Get.find<AuthController>().isLogedIn()
-            ? const LocationPage()
-            : const WelcomeScreen());
+        widget.onInitializationComplete();
       });
     });
   }
@@ -34,10 +31,14 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: backGroundColor,
       body: Container(
         decoration: BoxDecoration(
-            gradient: LinearGradient(begin: Alignment.topCenter, colors: [
-          bgColor,
-          bgColor.withOpacity(0.01),
-        ])),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            colors: [
+              bgColor,
+              bgColor.withOpacity(0.01),
+            ],
+          ),
+        ),
         child: Center(
           child: CircleAvatar(
             radius: 100,
@@ -49,9 +50,10 @@ class _SplashScreenState extends State<SplashScreen> {
                 Text(
                   'طرد دریفر',
                   style: TextStyle(
-                      fontFamily: 'RadioCanada',
-                      fontSize: 50,
-                      color: textcyanColor),
+                    fontFamily: 'RadioCanada',
+                    fontSize: 50,
+                    color: textcyanColor,
+                  ),
                 ),
                 Text(
                   'Tarud Driver',

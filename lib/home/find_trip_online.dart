@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:firebase_messaging_platform_interface/src/remote_message.dart';
 import 'package:flutter/material.dart';
@@ -6,12 +7,14 @@ import 'package:get/get.dart';
 import 'package:get/get_rx/get_rx.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import '../alltrips/controller/find_trip_controller.dart';
 import '../alltrips/model/find_tripmodel.dart';
 import '../api/api_constants.dart';
+import '../api/auth_controller.dart';
 import '../constant/colors_utils.dart';
-import '../main.dart';
+import '../models/MDGetRequestData.dart';
 import '../profile/profile_page.dart';
 import '../widgets/custom_button.dart';
 import 'controller/location_controller.dart';
@@ -36,6 +39,50 @@ class _FindTripOnlineState extends State<FindTripOnline> {
   RxBool requestReceived = false.obs;
   RxBool requestAccepted = false.obs;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  MDGetRequestData? mdGetRequestData;
+  String? formattedDate;
+  final amonutController = TextEditingController();
+
+  Future<void> getRequestData(RemoteMessage? message) async {
+    print('message====${message!.data}');
+    // Extract the request_id from the message data
+    var requestId = message.data['request_id'];
+    const String apiUrl = 'http://delivershipment.com/api/getRequest';
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          "Authorization":
+              "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+        },
+        body: {
+          'id': requestId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // API call was successful
+        print('API call successful');
+        final jsonResponse = json.decode(response.body);
+
+        setState(() {
+          mdGetRequestData = MDGetRequestData.fromJson(jsonResponse);
+          String createdAt = mdGetRequestData!.requestData!.createdAt!;
+          DateTime parsedDate = DateTime.parse(createdAt);
+          formattedDate = DateFormat('yyyy-MM-dd')
+              .format(parsedDate); // Format to only show the date part
+        });
+        print('mdGetRequestData======${mdGetRequestData}');
+      } else {
+        // API call failed
+        print('API call failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle error
+      print('API call error: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -165,14 +212,18 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                               0.06,
                                       // Height adjusted for mobile devices
                                       child: ElevatedButton(
-                                        onPressed: () {
+                                        onPressed: () async {
                                           // Handle accept action
                                           setState(() {
                                             requestAccepted.value = true;
                                           });
+                                          await getRequestData(widget.message);
                                           showBottomSheet(
                                             context: context,
-                                            builder: (_) => Wrap(
+                                            builder: (_) =>
+                                                // Extract and format createdAt field
+
+                                                Wrap(
                                               children: [
                                                 Column(
                                                   mainAxisAlignment:
@@ -241,14 +292,14 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                           top:
                                                                               2),
                                                                       child: Text(
-                                                                          'data[index].createdAt',
+                                                                          formattedDate!,
                                                                           style:
                                                                               const TextStyle(fontSize: 14)),
                                                                     ),
                                                                   ],
                                                                 ),
                                                                 Text(
-                                                                    'Ride #data[index].id',
+                                                                    'Ride # ${mdGetRequestData!.requestData!.id}',
                                                                     style: const TextStyle(
                                                                         fontSize:
                                                                             14)),
@@ -312,7 +363,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                           height:
                                                                               2),
                                                                       Text(
-                                                                          'data[index].parcelAddress' ??
+                                                                          '${mdGetRequestData!.requestData!.parcelAddress}' ??
                                                                               '',
                                                                           style: const TextStyle(
                                                                               fontSize:
@@ -323,7 +374,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                           height:
                                                                               22),
                                                                       Text(
-                                                                          'data[index].receiverAddress' ??
+                                                                          '${mdGetRequestData!.requestData!.receiverAddress}' ??
                                                                               '',
                                                                           style: const TextStyle(
                                                                               fontSize:
@@ -378,11 +429,10 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                                 errorStyle: TextStyle(height: 0.05),
                                                                                 hintStyle: TextStyle(fontSize: 16, color: Colors.grey),
                                                                               ),
-                                                                              // controller:
-                                                                              // amonutController
-                                                                              //   ..text = data[index]
-                                                                              //       .amount ??
-                                                                              //       '',
+                                                                              controller: amonutController,
+                                                                              onChanged: (value) {
+                                                                                print(value);
+                                                                              },
                                                                             ),
                                                                           ),
                                                                         ],
@@ -411,17 +461,27 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                         'Bid Your Price',
                                                                     onPress:
                                                                         () async {
-                                                                      Get.back();
-                                                                      await Get.find<
-                                                                              RideTrackingController>()
-                                                                          .bidOnUserRequests(
-                                                                        requestId:
-                                                                            'data[index].id',
-                                                                        amount:
-                                                                            '',
-                                                                        // amount: amonutController
-                                                                        //     .text
-                                                                      );
+                                                                      if (amonutController
+                                                                          .text
+                                                                          .isEmpty) {
+                                                                        Get.snackbar(
+                                                                            'Alert',
+                                                                            'Please Enter Bidding Amount',
+                                                                            backgroundColor:
+                                                                                Colors.red);
+                                                                      } else {
+                                                                        print(
+                                                                            'amountController.text=${amonutController.text}');
+                                                                        print(
+                                                                            'widget.message!.data[request_id]=${widget.message!.data['request_id']}');
+                                                                        await Get.find<RideTrackingController>()
+                                                                            .bidOnUserRequests(
+                                                                          requestId:
+                                                                              '${widget.message!.data['request_id']}',
+                                                                          amount:
+                                                                              amonutController.text ?? '',
+                                                                        );
+                                                                      }
                                                                     })
                                                               ],
                                                             )
@@ -768,7 +828,7 @@ Widget newRequest(List<TripData> data, ScrollController scrollController) {
                         children: [
                           Text(data[index].user?.name ?? ''),
                           Text(
-                            '${data[index].parcelAddress?.substring(0, 10)} To ${data[index].receiverAddress?.substring(0, 10)}',
+                            '${data[index].parcelAddress} To ${data[index].receiverAddress}',
                             style: const TextStyle(fontSize: 11),
                           )
                         ],
