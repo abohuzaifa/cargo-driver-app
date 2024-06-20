@@ -14,6 +14,7 @@ import 'auth_controller.dart';
 
 class AuthRepo {
   final SharedPreferences sharedPreferences;
+
   AuthRepo({required this.sharedPreferences});
 
   String? getAuthToken() {
@@ -80,12 +81,16 @@ class AuthRepo {
     }
   }
 
-  Future<Map<String, dynamic>> login({
-    required String password,
-    required String mobileNumber,
-    String? userType,
-    String? fcmToken
-  }) async {
+  Future<Map<String, dynamic>> login(
+      {required String password,
+      required String mobileNumber,
+      String? userType,
+      String? fcmToken}) async {
+    // Print out all parameters
+    print('Password: $password');
+    print('Mobile Number: $mobileNumber');
+    print('User Type: $userType');
+    print('FCM Token: $fcmToken');
     APISTRUCTURE apiObject = APISTRUCTURE(
       apiUrl: ApplicationUrl.LOGIN_URL,
       apiRequestMethod: APIREQUESTMETHOD.POST,
@@ -93,7 +98,7 @@ class AuthRepo {
       body: apiClient.FormData.fromMap({
         "password": password,
         "mobile": mobileNumber,
-        "user_type": '1',
+        "user_type": userType,
         'device_token': fcmToken
       }),
     );
@@ -247,16 +252,16 @@ class AuthRepo {
     return sharedPreferences.getBool('AppConstants.NOTIFICATION') ?? true;
   }
 
-  // void setNotificationActive(bool isActive) {
-  //   // if(isActive) {
-  //   //   updateToken();
-  //   // }else {
-  //     if(!GetPlatform.isWeb) {
-  //       FirebaseMessaging.instance.unsubscribeFromTopic(AppConstants.TOPIC);
-  //       if(isLoggedIn()) {
-  //         FirebaseMessaging.instance.unsubscribeFromTopic('zone_${Get.find<LocationController>().getUserAddress().zoneId}_customer');
-  //       }
-  //     }
-  //   }
-  //   sharedPreferences.setBool(AppConstants.NOTIFICATION, isActive);
+// void setNotificationActive(bool isActive) {
+//   // if(isActive) {
+//   //   updateToken();
+//   // }else {
+//     if(!GetPlatform.isWeb) {
+//       FirebaseMessaging.instance.unsubscribeFromTopic(AppConstants.TOPIC);
+//       if(isLoggedIn()) {
+//         FirebaseMessaging.instance.unsubscribeFromTopic('zone_${Get.find<LocationController>().getUserAddress().zoneId}_customer');
+//       }
+//     }
+//   }
+//   sharedPreferences.setBool(AppConstants.NOTIFICATION, isActive);
 }

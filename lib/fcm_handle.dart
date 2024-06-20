@@ -175,13 +175,10 @@ class MessagingService {
       debugPrint('Message data: ${message.data}');
       print('Message Data: ${message.data}');
       if (message.notification!.title == 'New request') {
-        Get.offAll(() => BottomBarScreen());
         Get.to(() => FindTripOnline(message: message));
       } else if (message.notification!.title == 'Accept Offer') {
-        Get.offAll(() => BottomBarScreen());
         Get.to(() => DriverRequestNotificationScreen(message: message));
       }
-
     } else {
       debugPrint('Message data is empty');
     }

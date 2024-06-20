@@ -18,8 +18,11 @@ import '../driver_request_notification_screen.dart';
 
 class RideTrackingController extends GetxController implements GetxService {
   final UserRepo userRepo;
+
   RideTrackingController({required this.userRepo});
+
   late GoogleMapController _mapController;
+
   GoogleMapController get mapController => _mapController;
   late StreamSubscription<Position> streamSubscription;
   var latitude = Rx<double>(0.0);
@@ -84,12 +87,13 @@ class RideTrackingController extends GetxController implements GetxService {
 
   Future<void> init() async {
     polylinePoints = PolylinePoints();
-    sourceIcon = await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(devicePixelRatio: 2.5),
-        'assets/images/driver_way.png');
+
     destinationIcon = await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(devicePixelRatio: 2.5),
+        const ImageConfiguration(devicePixelRatio: 0.01),
         'assets/images/location_icon.png');
+    sourceIcon = await BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(devicePixelRatio: 1),
+        'assets/images/sourceIcon.png');
     driverIcon = await BitmapDescriptor.fromAssetImage(
         const ImageConfiguration(devicePixelRatio: 2.5),
         'assets/images/driver_way.png');
@@ -183,7 +187,7 @@ class RideTrackingController extends GetxController implements GetxService {
     markers.add(Marker(
       markerId: const MarkerId('Driver'),
       position: LatLng(latitude.value, longitude.value),
-      icon: sourceIcon,
+      icon: driverIcon,
     ));
 
     markers.add(Marker(
@@ -191,12 +195,16 @@ class RideTrackingController extends GetxController implements GetxService {
       position: LatLng(userLatitude.value, userLongitude.value),
       icon: destinationIcon,
     ));
-
+    markers.add(Marker(
+      markerId: const MarkerId('Source'),
+      position: LatLng(31.4835, 74.3782),
+      icon: sourceIcon,
+    ));
     log('Markers added successfully');
     update();
   }
 
-  void updateDriverMarker(Position position) {
+  void updateDriverMarker(LatLng position) {
     double bearing = 0.0;
     if (lastDriverLocation != null) {
       bearing = _calculateBearing(
@@ -215,11 +223,20 @@ class RideTrackingController extends GetxController implements GetxService {
   }
 
   void updatePolyLinesAndMarkers(Position position) async {
+    LatLng sourceLocation = LatLng(31.4835, 74.3782);
+    LatLng destinationLocation = LatLng(31.4926, 74.3925);
+    userLatitude.value = destinationLocation.latitude;
+    userLongitude.value = destinationLocation.longitude;
+
+    // Print source and destination locations
+    print('Source Location: $sourceLocation');
+    print('Destination Location: $destinationLocation');
+
     await setPolyLines(
-      sourceLocation: LatLng(userLatitude.value, userLongitude.value),
-      destinationLocation: LatLng(position.latitude, position.longitude),
+      sourceLocation: sourceLocation,
+      destinationLocation: destinationLocation,
     );
-    updateDriverMarker(position);
+    updateDriverMarker(LatLng(31.4926, 74.3925));
     addMarkers();
   }
 

@@ -41,7 +41,7 @@ class DriverRequestNotificationScreen extends StatelessWidget {
               child: CustomButton(
                   buttonText: "Proceed",
                   onPress: () {
-                    Get.to(() => const BottomBarScreen());
+                 //   Get.to(() => const BottomBarScreen());
                   }),
             ),
             backgroundColor: Colors.transparent,

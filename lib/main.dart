@@ -42,6 +42,7 @@ Future<void> initNotifications() async {
   final fcmToken = await _firebaseMessaging.getToken();
   print('token=====${fcmToken}');
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (Firebase.apps.isEmpty) {
@@ -96,10 +97,8 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> {
   void _handleMessage(RemoteMessage message) {
     // Navigate to the desired screen with the message data
     if (message.notification?.title == 'New request') {
-      Get.offAll(() => BottomBarScreen());
       Get.to(() => FindTripOnline(message: message));
     } else if (message.notification?.title == 'Accept Offer') {
-      Get.offAll(() => BottomBarScreen());
       Get.to(() => DriverRequestNotificationScreen(message: message));
     }
   }
@@ -136,13 +135,19 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> {
             },
           ),
           getPages: [
-            GetPage(name: '/', page: () => SplashScreen(onInitializationComplete: () {})),
-            GetPage(name: '/findTrip', page: () => FindTripOnline(message: _initialMessage)),
-            GetPage(name: '/driverRequest', page: () => DriverRequestNotificationScreen(message: _initialMessage)),
+            GetPage(
+                name: '/',
+                page: () => SplashScreen(onInitializationComplete: () {})),
+            GetPage(
+                name: '/findTrip',
+                page: () => FindTripOnline(message: _initialMessage)),
+            GetPage(
+                name: '/driverRequest',
+                page: () =>
+                    DriverRequestNotificationScreen(message: _initialMessage)),
           ],
         );
       },
     );
   }
 }
-
