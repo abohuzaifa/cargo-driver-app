@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
 import 'dart:math' as math;
-
 import 'package:cargo_driver_app/api/api_constants.dart';
 import 'package:cargo_driver_app/util/apputils.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_polyline_points_plus/flutter_polyline_points_plus.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:get/get_rx/get_rx.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import '../../api/auth_controller.dart';
@@ -17,6 +17,11 @@ import '../../mqtt_service.dart';
 import '../driver_request_notification_screen.dart';
 
 class RideTrackingController extends GetxController implements GetxService {
+  RxBool isParcelLocationReached = false.obs;
+  late Timer _locationCheckTimer;
+
+  LatLng parcelLocation = LatLng(31.4926, 74.3925); // Example parcel location
+
   final UserRepo userRepo;
 
   RideTrackingController({required this.userRepo});
@@ -47,6 +52,7 @@ class RideTrackingController extends GetxController implements GetxService {
     super.onInit();
     init();
     initClient();
+    startLocationCheck();
   }
 
   @override
@@ -97,6 +103,33 @@ class RideTrackingController extends GetxController implements GetxService {
     driverIcon = await BitmapDescriptor.fromAssetImage(
         const ImageConfiguration(devicePixelRatio: 2.5),
         'assets/images/driver_way.png');
+  }
+
+  startLocationCheck() {
+    print('In startLocationCheck');
+
+    _locationCheckTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+      print('latitude.value ======${latitude.value}');
+      print('longitude.value ${longitude.value}');
+      if (latitude.value == parcelLocation.latitude &&
+          longitude.value == parcelLocation.longitude) {
+        isParcelLocationReached.value = true;
+        timer.cancel(); // Stop the timer after showing the dialog
+      }
+    });
+  }
+
+  void setParcelLocationToCurrent() {
+    print(' In setParcelLocationToCurrent');
+    print('latitude.value ======${latitude.value}');
+    print('longitude.value ${longitude.value}');
+    parcelLocation = LatLng(latitude.value, longitude.value);
+    print('parcelLocation======${parcelLocation}');
+    if (latitude.value == parcelLocation.latitude &&
+        longitude.value == parcelLocation.longitude) {
+      isParcelLocationReached.value = true;
+    }
+    update();
   }
 
   Future<void> getAddress(Position position) async {

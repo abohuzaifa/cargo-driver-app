@@ -176,7 +176,8 @@ class _FindTripOnlineState extends State<FindTripOnline> {
               ),
               newRequest(_trips, _scrollController),
               requestReceived.value == true && requestAccepted.value == false
-                  ? Container(
+                  ?
+              Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
