@@ -36,7 +36,7 @@ class DriverRequestNotificationScreen extends StatelessWidget {
             ],
           ),
         ),
-        child: GetX(
+        child: GetBuilder(
             init: RideTrackingController(userRepo: UserRepo()),
             builder: (controller) {
               return Scaffold(

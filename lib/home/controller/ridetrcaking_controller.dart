@@ -197,47 +197,55 @@ class RideTrackingController extends GetxController implements GetxService {
   }) async {
     String apiKey = "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko";
 
-    // Request route from current location to source
-    var currentToSourceResponse = await http.get(Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${sourceLocation.latitude},${sourceLocation.longitude}&key=$apiKey'));
-    var currentToSourceData = jsonDecode(currentToSourceResponse.body);
-    var currentToSourceEncodedPoints =
-    currentToSourceData['routes'][0]['overview_polyline']['points'];
-    var currentToSourcePoints =
-    decodeEncodedPolyline(currentToSourceEncodedPoints);
+    try {
+      // Request route from current location to source
+      var currentToSourceResponse = await http.get(Uri.parse(
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${sourceLocation.latitude},${sourceLocation.longitude}&key=$apiKey'));
+      var currentToSourceData = jsonDecode(currentToSourceResponse.body);
+      if (currentToSourceData['routes'].isEmpty) {
+        throw Exception('No routes found from current location to source.');
+      }
+      var currentToSourceEncodedPoints =
+      currentToSourceData['routes'][0]['overview_polyline']['points'];
+      var currentToSourcePoints = decodeEncodedPolyline(currentToSourceEncodedPoints);
 
-    // Request route from source to destination
-    var sourceToDestinationResponse = await http.get(Uri.parse(
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
-    var sourceToDestinationData = jsonDecode(sourceToDestinationResponse.body);
-    var sourceToDestinationEncodedPoints =
-    sourceToDestinationData['routes'][0]['overview_polyline']['points'];
-    var sourceToDestinationPoints =
-    decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+      // Request route from source to destination
+      var sourceToDestinationResponse = await http.get(Uri.parse(
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
+      var sourceToDestinationData = jsonDecode(sourceToDestinationResponse.body);
+      if (sourceToDestinationData['routes'].isEmpty) {
+        throw Exception('No routes found from source to destination.');
+      }
+      var sourceToDestinationEncodedPoints =
+      sourceToDestinationData['routes'][0]['overview_polyline']['points'];
+      var sourceToDestinationPoints = decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
-    pathPoints.clear();
+      pathPoints.clear();
 
-    // Add current location to pathPoints
-    pathPoints.add(currentLocation);
+      // Add current location to pathPoints
+      pathPoints.add(currentLocation);
 
-    // Add points from current to source
-    pathPoints.addAll(currentToSourcePoints);
+      // Add points from current to source
+      pathPoints.addAll(currentToSourcePoints);
 
-    // Add points from source to destination
-    pathPoints.addAll(sourceToDestinationPoints);
+      // Add points from source to destination
+      pathPoints.addAll(sourceToDestinationPoints);
 
-    polylines.clear();
-    polylines.add(Polyline(
-      polylineId: const PolylineId('poly'),
-      color: const Color.fromARGB(255, 198, 40, 98),
-      points: pathPoints,
-      width: 8,
-      startCap: Cap.roundCap,
-      endCap: Cap.roundCap,
-    ));
+      polylines.clear();
+      polylines.add(Polyline(
+        polylineId: const PolylineId('poly'),
+        color: const Color.fromARGB(255, 198, 40, 98),
+        points: pathPoints,
+        width: 8,
+        startCap: Cap.roundCap,
+        endCap: Cap.roundCap,
+      ));
 
-    log('Polylines added successfully');
-    update();
+      log('Polylines added successfully');
+      update();
+    } catch (e) {
+      log('Error setting polylines: $e');
+    }
   }
 
   List<LatLng> decodeEncodedPolyline(String encoded) {

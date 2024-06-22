@@ -164,7 +164,7 @@ class MessagingService {
   // Handling a notification click event by navigating to the specified screen
   void _handleNotificationClick(BuildContext context, RemoteMessage message) {
     // Check if the message contains data
-    if (message.notification!.title == 'New request') {
+    if (message.notification?.title == 'New request') {
       Get.offAll(() => BottomBarScreen());
       Get.to(() => FindTripOnline(message: message));
     } else if (message.notification!.title == 'Accept Offer') {
