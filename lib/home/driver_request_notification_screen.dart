@@ -45,7 +45,8 @@ class DriverRequestNotificationScreen extends StatelessWidget {
                     child: CustomButton(
                         buttonText: "Proceed",
                         onPress: () {
-                          controller.setParcelLocationToCurrent();
+                          controller.createHistory(isStart: '1', isEnd: '0');
+                          // controller.setParcelLocationToCurrent();
                           //   Get.to(() => const BottomBarScreen());
                         }),
                   ),

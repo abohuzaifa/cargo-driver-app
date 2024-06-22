@@ -9,6 +9,7 @@ import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../alltrips/controller/find_trip_controller.dart';
 import '../alltrips/model/find_tripmodel.dart';
 import '../api/api_constants.dart';
@@ -47,6 +48,8 @@ class _FindTripOnlineState extends State<FindTripOnline> {
     print('message====${message!.data}');
     // Extract the request_id from the message data
     var requestId = message.data['request_id'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('request_id', requestId);
     const String apiUrl = 'http://delivershipment.com/api/getRequest';
 
     try {
@@ -66,12 +69,18 @@ class _FindTripOnlineState extends State<FindTripOnline> {
         print('API call successful');
         final jsonResponse = json.decode(response.body);
 
-        setState(() {
+        setState(() async {
           mdGetRequestData = MDGetRequestData.fromJson(jsonResponse);
           String createdAt = mdGetRequestData!.requestData!.createdAt!;
           DateTime parsedDate = DateTime.parse(createdAt);
           formattedDate = DateFormat('yyyy-MM-dd')
               .format(parsedDate); // Format to only show the date part
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+
+          await prefs.setString('parcel_lat', mdGetRequestData!.requestData!.parcelLat!);
+          await prefs.setString('parcel_long', mdGetRequestData!.requestData!.parcelLong!);
+          await prefs.setString('receiver_lat', mdGetRequestData!.requestData!.receiverLat!);
+          await prefs.setString('receiver_long', mdGetRequestData!.requestData!.receiverLong!);
         });
         print('mdGetRequestData======${mdGetRequestData}');
       } else {
@@ -176,8 +185,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
               ),
               newRequest(_trips, _scrollController),
               requestReceived.value == true && requestAccepted.value == false
-                  ?
-              Container(
+                  ? Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -471,6 +479,10 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                             backgroundColor:
                                                                                 Colors.red);
                                                                       } else {
+                                                                        SharedPreferences
+                                                                            prefs =
+                                                                            await SharedPreferences.getInstance();
+
                                                                         print(
                                                                             'amountController.text=${amonutController.text}');
                                                                         print(

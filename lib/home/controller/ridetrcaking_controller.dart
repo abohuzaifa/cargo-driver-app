@@ -9,16 +9,20 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:get/get_rx/get_rx.dart';
+import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:mqtt_client/mqtt_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/auth_controller.dart';
 import '../../api/user_repo.dart';
-import '../../mqtt_service.dart';
 import '../driver_request_notification_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RideTrackingController extends GetxController implements GetxService {
+  RxBool isRideStarted = false.obs;
   RxBool isParcelLocationReached = false.obs;
   late Timer _locationCheckTimer;
+  late Timer _historyTimer;
 
   LatLng parcelLocation = LatLng(31.4926, 74.3925); // Example parcel location
 
@@ -40,7 +44,7 @@ class RideTrackingController extends GetxController implements GetxService {
   late BitmapDescriptor sourceIcon;
   late BitmapDescriptor destinationIcon;
   late BitmapDescriptor driverIcon;
-
+  DateTime? lastPositionTime;
   LatLng? lastDriverLocation;
 
   List<LatLng> pathPoints = [];
@@ -48,41 +52,32 @@ class RideTrackingController extends GetxController implements GetxService {
   late PolylinePoints polylinePoints;
 
   @override
-  void onInit() {
+  Future<void> onInit() async {
     super.onInit();
+
     init();
-    initClient();
+    // initClient();
     startLocationCheck();
   }
 
   @override
-  void onReady() {
+  Future<void> onReady() async {
     super.onReady();
-    streamSubscription =
-        Geolocator.getPositionStream().listen((position) async {
-      latitude.value = position.latitude;
-      longitude.value = position.longitude;
-      log('Location Listen==?$position');
-      mapController.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(
-            target: LatLng(latitude.value, longitude.value), zoom: 14.4746),
-      ));
+    try {
+      Position currentPosition = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      latitude.value = currentPosition.latitude;
+      longitude.value = currentPosition.longitude;
+      update();
+      log('Current Location: $currentPosition');
+      updatePolyLinesAndMarkers(currentPosition);
+    } catch (e) {
+      log('Failed to get current location: '
+          '$e');
+      return;
+    }
 
-      if (userLatitude.value != 0.0 && userLongitude.value != 0.0) {
-        updatePolyLinesAndMarkers(position);
-      }
 
-      final location = LocationModel(
-        latitude: position.latitude,
-        longitude: position.longitude,
-      );
-
-      if (MQTTClient.client.connectionStatus?.state ==
-          MqttConnectionState.connected) {
-        MQTTClient.emitLocation(location,
-            '${Get.find<AuthController>().getLoginUserData()?.user?.id}');
-      }
-    });
   }
 
   @override
@@ -105,15 +100,23 @@ class RideTrackingController extends GetxController implements GetxService {
         'assets/images/driver_way.png');
   }
 
-  startLocationCheck() {
+  void startLocationCheck() {
     print('In startLocationCheck');
 
-    _locationCheckTimer = Timer.periodic(Duration(seconds: 5), (timer) {
-      print('latitude.value ======${latitude.value}');
-      print('longitude.value ${longitude.value}');
-      if (latitude.value == parcelLocation.latitude &&
-          longitude.value == parcelLocation.longitude) {
+    _locationCheckTimer = Timer.periodic(Duration(minutes: 5), (timer) {
+      print('latitude.value in startLocationCheck ======${latitude.value}');
+      print('longitude.value in startLocationCheck ${longitude.value}');
+
+      LatLng currentLocation = LatLng(latitude.value, longitude.value);
+
+      double distance = _calculateDistance(currentLocation, parcelLocation);
+      print('Distance to parcel location: $distance meters');
+
+      if (distance <= 100) {
         isParcelLocationReached.value = true;
+        _historyTimer.cancel();
+        _locationCheckTimer.cancel();
+
         timer.cancel(); // Stop the timer after showing the dialog
       }
     });
@@ -121,8 +124,9 @@ class RideTrackingController extends GetxController implements GetxService {
 
   void setParcelLocationToCurrent() {
     print(' In setParcelLocationToCurrent');
-    print('latitude.value ======${latitude.value}');
-    print('longitude.value ${longitude.value}');
+    print(
+        'latitude.value in setParcelLocationToCurrent======${latitude.value}');
+    print('longitude.value in setParcelLocationToCurrent ${longitude.value}');
     parcelLocation = LatLng(latitude.value, longitude.value);
     print('parcelLocation======${parcelLocation}');
     if (latitude.value == parcelLocation.latitude &&
@@ -132,13 +136,16 @@ class RideTrackingController extends GetxController implements GetxService {
     update();
   }
 
-  Future<void> getAddress(Position position) async {
-    List<Placemark> places = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-    Placemark place = places.first;
-    address.value = 'Address: ${place.locality}, ${place.country}';
+  Future<String> getAddress(double latitude, double longitude) async {
+    try {
+      List<Placemark> places =
+          await placemarkFromCoordinates(latitude, longitude);
+      Placemark place = places.first;
+      address.value = 'Address: ${place.locality}, ${place.country}';
+    } catch (e) {
+      print('Error occurred while getting address: $e');
+    }
+    return address.value;
   }
 
   Future createRideHistory(
@@ -186,36 +193,84 @@ class RideTrackingController extends GetxController implements GetxService {
   Future<void> setPolyLines({
     required LatLng sourceLocation,
     required LatLng destinationLocation,
+    required LatLng currentLocation,
   }) async {
-    var result = await polylinePoints.getRouteBetweenCoordinates(
-      optimizeWaypoints: true,
-      "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko",
-      PointLatLng(sourceLocation.latitude, sourceLocation.longitude),
-      PointLatLng(destinationLocation.latitude, destinationLocation.longitude),
-    );
-    if (result.points.isNotEmpty) {
-      pathPoints.clear();
-      for (var point in result.points) {
-        pathPoints.add(LatLng(point.latitude, point.longitude));
-      }
+    String apiKey = "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko";
 
-      polylines.clear();
-      polylines.add(Polyline(
-        polylineId: const PolylineId('poly'),
-        color: const Color.fromARGB(255, 198, 40, 98),
-        points: pathPoints,
-        width: 8,
-        startCap: Cap.roundCap,
-        endCap: Cap.roundCap,
-      ));
-      log('Polylines added successfully');
-    } else {
-      log('No points found in the polyline result');
-    }
+    // Request route from current location to source
+    var currentToSourceResponse = await http.get(Uri.parse(
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${sourceLocation.latitude},${sourceLocation.longitude}&key=$apiKey'));
+    var currentToSourceData = jsonDecode(currentToSourceResponse.body);
+    var currentToSourceEncodedPoints =
+    currentToSourceData['routes'][0]['overview_polyline']['points'];
+    var currentToSourcePoints =
+    decodeEncodedPolyline(currentToSourceEncodedPoints);
+
+    // Request route from source to destination
+    var sourceToDestinationResponse = await http.get(Uri.parse(
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
+    var sourceToDestinationData = jsonDecode(sourceToDestinationResponse.body);
+    var sourceToDestinationEncodedPoints =
+    sourceToDestinationData['routes'][0]['overview_polyline']['points'];
+    var sourceToDestinationPoints =
+    decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+
+    pathPoints.clear();
+
+    // Add current location to pathPoints
+    pathPoints.add(currentLocation);
+
+    // Add points from current to source
+    pathPoints.addAll(currentToSourcePoints);
+
+    // Add points from source to destination
+    pathPoints.addAll(sourceToDestinationPoints);
+
+    polylines.clear();
+    polylines.add(Polyline(
+      polylineId: const PolylineId('poly'),
+      color: const Color.fromARGB(255, 198, 40, 98),
+      points: pathPoints,
+      width: 8,
+      startCap: Cap.roundCap,
+      endCap: Cap.roundCap,
+    ));
+
+    log('Polylines added successfully');
     update();
   }
 
-  void addMarkers() {
+  List<LatLng> decodeEncodedPolyline(String encoded) {
+    List<LatLng> points = [];
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return points;
+  }
+
+  void addMarkers(LatLng sourceLatLng, LatLng destinationLatLng) {
     markers.clear();
     markers.add(Marker(
       markerId: const MarkerId('Driver'),
@@ -225,12 +280,12 @@ class RideTrackingController extends GetxController implements GetxService {
 
     markers.add(Marker(
       markerId: const MarkerId('Destination'),
-      position: LatLng(userLatitude.value, userLongitude.value),
+      position: destinationLatLng,
       icon: destinationIcon,
     ));
     markers.add(Marker(
       markerId: const MarkerId('Source'),
-      position: LatLng(31.4835, 74.3782),
+      position: sourceLatLng,
       icon: sourceIcon,
     ));
     log('Markers added successfully');
@@ -256,21 +311,40 @@ class RideTrackingController extends GetxController implements GetxService {
   }
 
   void updatePolyLinesAndMarkers(Position position) async {
-    LatLng sourceLocation = LatLng(31.4835, 74.3782);
-    LatLng destinationLocation = LatLng(31.4926, 74.3925);
-    userLatitude.value = destinationLocation.latitude;
-    userLongitude.value = destinationLocation.longitude;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var parcelLat = prefs.getString('parcel_lat');
+    var parcelLong = prefs.getString('parcel_long');
+    var receiverLat = prefs.getString('receiver_lat');
+    var receiverLong = prefs.getString('receiver_long');
+
+    print('Parcel Latitude: $parcelLat');
+    print('Parcel Longitude: $parcelLong');
+    print('Receiver Latitude: $receiverLat');
+    print('Receiver Longitude: $receiverLong');
+    double? parcelLat1 = double.tryParse(parcelLat ?? '');
+    double? parcelLong1 = double.tryParse(parcelLong ?? '');
+    double? receiverLat1 = double.tryParse(receiverLat ?? '');
+    double? receiverLong1 = double.tryParse(receiverLong ?? '');
+
+    LatLng sourceLocation = LatLng(parcelLat1!, parcelLong1!);
+    LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
+    // userLatitude.value = destinationLocation.latitude;
+    // userLongitude.value = destinationLocation.longitude;
 
     // Print source and destination locations
     print('Source Location: $sourceLocation');
     print('Destination Location: $destinationLocation');
 
     await setPolyLines(
+      currentLocation: LatLng(latitude.value, longitude.value),
       sourceLocation: sourceLocation,
       destinationLocation: destinationLocation,
     );
-    updateDriverMarker(LatLng(31.4926, 74.3925));
-    addMarkers();
+    update();
+    updateDriverMarker(LatLng(latitude.value, longitude.value));
+    addMarkers(sourceLocation, destinationLocation);
+
+    update();
   }
 
   void onCreated(GoogleMapController controller) async {
@@ -306,10 +380,6 @@ class RideTrackingController extends GetxController implements GetxService {
     _initialPosition = position;
   }
 
-  void initClient() {
-    MQTTClient.mqttForUser(
-        '${Get.find<AuthController>().getLoginUserData()?.user?.id}');
-  }
 
   Future<void> bidOnUserRequests({
     required String requestId,
@@ -343,5 +413,88 @@ class RideTrackingController extends GetxController implements GetxService {
 
   double _toDegrees(double radian) {
     return radian * 180 / math.pi;
+  }
+
+  double _calculateDistance(LatLng start, LatLng end) {
+    const R = 6371000; // Radius of the Earth in meters
+    double lat1 = _toRadians(start.latitude);
+    double lon1 = _toRadians(start.longitude);
+    double lat2 = _toRadians(end.latitude);
+    double lon2 = _toRadians(end.longitude);
+
+    double dLat = lat2 - lat1;
+    double dLon = lon2 - lon1;
+
+    double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1) *
+            math.cos(lat2) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+
+    return R * c;
+  }
+
+  Future<void> createHistory({
+    required String isStart,
+    required String isEnd,
+  }) async {
+    final requestId = await getRequestId(); // Retrieve the request_id
+    address.value = await getAddress(latitude.value, longitude.value);
+
+    final url = Uri.parse('http://delivershipment.com/api/createHistory');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      "Authorization":
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+    };
+    final body = jsonEncode({
+      'request_id': requestId,
+      'lat': latitude.value,
+      'long': longitude.value,
+      'address': address.value,
+      'is_start': isStart,
+      'is_end': isEnd,
+    });
+    print('body=${body}');
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        // Successfully created history
+        print('Successful to create history');
+        print('Response body: ${response.body}');
+        isRideStarted.value = true;
+        _startPeriodicHistoryUpdates();
+      } else {
+        // Error creating history
+        print('Failed to create history. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      // Exception handling
+      print('Exception caught: $e');
+    }
+  }
+
+  // Function to retrieve the request_id from SharedPreferences
+  Future<String?> getRequestId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('request_id');
+  }
+
+  void _startPeriodicHistoryUpdates() {
+    print('In _startPeriodicHistoryUpdates');
+    const duration = Duration(minutes: 5); // Adjust the interval as needed
+    _historyTimer = Timer.periodic(duration, (timer) {
+      if (isRideStarted.value == true) {
+        createHistory(isStart: '1', isEnd: '0');
+        print('In _startPeriodicHistoryUpdates Ping done');
+      } else {
+        timer.cancel();
+      }
+    });
   }
 }
