@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/auth_controller.dart';
 import '../../constant/colors_utils.dart';
@@ -10,8 +11,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  final RemoteMessage?
+  message; // Define a nullable variable to store the message
 
+  ChatPage({Key? key, this.message}) : super(key: key);
   @override
   _ChatPageState createState() => _ChatPageState();
 }

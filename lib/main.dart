@@ -11,6 +11,7 @@ import 'api/auth_controller.dart';
 import 'bindings/contorller_binding.dart';
 import 'fcm_handle.dart';
 import 'home/bottom_navbar.dart';
+import 'home/chat/chat_page.dart';
 import 'home/confirm_location_screen.dart';
 import 'home/driver_request_notification_screen.dart';
 import 'home/find_trip_online.dart';
@@ -100,6 +101,8 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> {
       Get.to(() => FindTripOnline(message: message));
     } else if (message.notification?.title == 'Accept Offer') {
       Get.to(() => DriverRequestNotificationScreen(message: message));
+    } else if (message.notification?.title == 'New Message') {
+      Get.to(() => ChatPage(message: message));
     }
   }
 
