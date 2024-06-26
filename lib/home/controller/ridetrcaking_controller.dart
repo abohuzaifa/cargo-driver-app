@@ -57,28 +57,26 @@ class RideTrackingController extends GetxController implements GetxService {
 
     init();
     // initClient();
-    startLocationCheck();
+    startLocationCheckIfNearByHundredMeters();
   }
 
-  @override
-  Future<void> onReady() async {
-    super.onReady();
-    try {
-      Position currentPosition = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      latitude.value = currentPosition.latitude;
-      longitude.value = currentPosition.longitude;
-      update();
-      log('Current Location: $currentPosition');
-      updatePolyLinesAndMarkers(currentPosition);
-    } catch (e) {
-      log('Failed to get current location: '
-          '$e');
-      return;
-    }
-
-
-  }
+  // @override
+  // Future<void> onReady() async {
+  //   super.onReady();
+  //   try {
+  //     Position currentPosition = await Geolocator.getCurrentPosition(
+  //         desiredAccuracy: LocationAccuracy.high);
+  //     latitude.value = currentPosition.latitude;
+  //     longitude.value = currentPosition.longitude;
+  //     update();
+  //     log('Current Location: $currentPosition');
+  //     updatePolyLinesAndMarkers(currentPosition);
+  //   } catch (e) {
+  //     log('Failed to get current location: '
+  //         '$e');
+  //     return;
+  //   }
+  // }
 
   @override
   void onClose() {
@@ -98,10 +96,23 @@ class RideTrackingController extends GetxController implements GetxService {
     driverIcon = await BitmapDescriptor.fromAssetImage(
         const ImageConfiguration(devicePixelRatio: 2.5),
         'assets/images/driver_way.png');
+    try {
+      Position currentPosition = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      latitude.value = currentPosition.latitude;
+      longitude.value = currentPosition.longitude;
+      update();
+      log('Current Location: $currentPosition');
+      updatePolyLinesAndMarkers(currentPosition);
+    } catch (e) {
+      log('Failed to get current location: '
+          '$e');
+      return;
+    }
   }
 
-  void startLocationCheck() {
-    print('In startLocationCheck');
+  void startLocationCheckIfNearByHundredMeters() {
+    print('In startLocationCheckIfNearByHundredMeters');
 
     _locationCheckTimer = Timer.periodic(Duration(minutes: 5), (timer) {
       print('latitude.value in startLocationCheck ======${latitude.value}');
@@ -206,19 +217,22 @@ class RideTrackingController extends GetxController implements GetxService {
         throw Exception('No routes found from current location to source.');
       }
       var currentToSourceEncodedPoints =
-      currentToSourceData['routes'][0]['overview_polyline']['points'];
-      var currentToSourcePoints = decodeEncodedPolyline(currentToSourceEncodedPoints);
+          currentToSourceData['routes'][0]['overview_polyline']['points'];
+      var currentToSourcePoints =
+          decodeEncodedPolyline(currentToSourceEncodedPoints);
 
       // Request route from source to destination
       var sourceToDestinationResponse = await http.get(Uri.parse(
           'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
-      var sourceToDestinationData = jsonDecode(sourceToDestinationResponse.body);
+      var sourceToDestinationData =
+          jsonDecode(sourceToDestinationResponse.body);
       if (sourceToDestinationData['routes'].isEmpty) {
         throw Exception('No routes found from source to destination.');
       }
       var sourceToDestinationEncodedPoints =
-      sourceToDestinationData['routes'][0]['overview_polyline']['points'];
-      var sourceToDestinationPoints = decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+          sourceToDestinationData['routes'][0]['overview_polyline']['points'];
+      var sourceToDestinationPoints =
+          decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
       pathPoints.clear();
 
@@ -387,7 +401,6 @@ class RideTrackingController extends GetxController implements GetxService {
         target: LatLng(latitude.value, longitude.value), zoom: 18.0);
     _initialPosition = position;
   }
-
 
   Future<void> bidOnUserRequests({
     required String requestId,

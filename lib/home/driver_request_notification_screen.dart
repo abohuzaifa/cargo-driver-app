@@ -23,23 +23,23 @@ class DriverRequestNotificationScreen extends StatelessWidget {
 // "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko",
   @override
   Widget build(BuildContext context) {
-    return Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.center,
-            colors: [
-              const Color(0xff113946),
-              const Color(0xff113946).withOpacity(0.01),
-            ],
-          ),
-        ),
-        child: GetBuilder(
-            init: RideTrackingController(userRepo: UserRepo()),
-            builder: (controller) {
-              return Scaffold(
+    return GetBuilder(
+        init: RideTrackingController(userRepo: UserRepo()),
+        builder: (controller) {
+          return Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.center,
+                  colors: [
+                    const Color(0xff113946),
+                    const Color(0xff113946).withOpacity(0.01),
+                  ],
+                ),
+              ),
+              child: Scaffold(
                   bottomSheet: Padding(
                     padding: const EdgeInsets.all(30.0),
                     child: CustomButton(
@@ -81,29 +81,34 @@ class DriverRequestNotificationScreen extends StatelessWidget {
                           SizedBox(height: 10.h),
                           Expanded(
                             child: Container(
-                              foregroundDecoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.center,
-                                  colors: [
-                                    bgColor,
-                                    bgColor.withOpacity(0.5),
-                                  ],
+                                foregroundDecoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.center,
+                                    colors: [
+                                      bgColor,
+                                      bgColor.withOpacity(0.5),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: GoogleMap(
-                                markers: controller.markers,
-                                polylines: controller.polylines,
-                                compassEnabled: false,
-                                onCameraMove: controller.onCameraMove,
-                                initialCameraPosition: CameraPosition(
-                                    target: LatLng(controller.latitude.value,
-                                        controller.longitude.value),
-                                    zoom: 14),
-                                onMapCreated: controller.onCreated,
-                                onCameraIdle: () async {},
-                              ),
-                            ),
+                                child: GetBuilder(
+                                    init: RideTrackingController(
+                                        userRepo: UserRepo()),
+                                    builder: (controller) {
+                                      return GoogleMap(
+                                        markers: controller.markers,
+                                        polylines: controller.polylines,
+                                        compassEnabled: false,
+                                        onCameraMove: controller.onCameraMove,
+                                        initialCameraPosition: CameraPosition(
+                                            target: LatLng(
+                                                controller.latitude.value,
+                                                controller.longitude.value),
+                                            zoom: 14),
+                                        onMapCreated: controller.onCreated,
+                                        onCameraIdle: () async {},
+                                      );
+                                    })),
                           )
                         ],
                       ),
@@ -199,7 +204,7 @@ class DriverRequestNotificationScreen extends StatelessWidget {
                             )
                           : Container()
                     ],
-                  ));
-            }));
+                  )));
+        });
   }
 }

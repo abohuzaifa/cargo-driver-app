@@ -77,10 +77,14 @@ class _FindTripOnlineState extends State<FindTripOnline> {
               .format(parsedDate); // Format to only show the date part
           SharedPreferences prefs = await SharedPreferences.getInstance();
 
-          await prefs.setString('parcel_lat', mdGetRequestData!.requestData!.parcelLat!);
-          await prefs.setString('parcel_long', mdGetRequestData!.requestData!.parcelLong!);
-          await prefs.setString('receiver_lat', mdGetRequestData!.requestData!.receiverLat!);
-          await prefs.setString('receiver_long', mdGetRequestData!.requestData!.receiverLong!);
+          await prefs.setString(
+              'parcel_lat', mdGetRequestData!.requestData!.parcelLat!);
+          await prefs.setString(
+              'parcel_long', mdGetRequestData!.requestData!.parcelLong!);
+          await prefs.setString(
+              'receiver_lat', mdGetRequestData!.requestData!.receiverLat!);
+          await prefs.setString(
+              'receiver_long', mdGetRequestData!.requestData!.receiverLong!);
         });
         print('mdGetRequestData======${mdGetRequestData}');
       } else {
@@ -96,6 +100,8 @@ class _FindTripOnlineState extends State<FindTripOnline> {
   @override
   void initState() {
     super.initState();
+    print(
+        'Get.find<AuthController>().authRepo.getAuthToken()========${Get.find<AuthController>().authRepo.getAuthToken()}');
     _scrollController.addListener(_scrollListener);
     _loadTrips();
     if (widget.message != null) {

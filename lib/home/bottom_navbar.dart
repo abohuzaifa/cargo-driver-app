@@ -7,6 +7,8 @@ import '../../wallet/wallet_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import 'chat/chat_page.dart';
+
 class BottomBarScreen extends StatefulWidget {
   const BottomBarScreen({Key? key}) : super(key: key);
 
@@ -18,11 +20,13 @@ class _BottomBarScreenState extends State<BottomBarScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-     FindTripOnline(),
+    FindTripOnline(),
     const WalletPage(),
     const AllTripsPage(),
+    ChatPage(),
     UpdateProfile()
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,6 +59,14 @@ class _BottomBarScreenState extends State<BottomBarScreen> {
           BottomNavigationBarItem(
             icon: Image.asset(
               "assets/images/report_icon.png",
+              height: 30.h,
+              width: 30.w,
+            ),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Image.asset(
+              "assets/images/chat_icon.png",
               height: 30.h,
               width: 30.w,
             ),

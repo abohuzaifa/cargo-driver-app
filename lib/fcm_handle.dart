@@ -167,16 +167,16 @@ class MessagingService {
     if (message.notification?.title == 'New request') {
       Get.offAll(() => BottomBarScreen());
       Get.to(() => FindTripOnline(message: message));
-    } else if (message.notification!.title == 'Accept Offer') {
+    } else if (message.notification?.title == 'Accept Offer') {
       Get.offAll(() => BottomBarScreen());
       Get.to(() => DriverRequestNotificationScreen(message: message));
     }
     if (message.data.isNotEmpty) {
       debugPrint('Message data: ${message.data}');
       print('Message Data: ${message.data}');
-      if (message.notification!.title == 'New request') {
+      if (message.notification?.title == 'New request') {
         Get.to(() => FindTripOnline(message: message));
-      } else if (message.notification!.title == 'Accept Offer') {
+      } else if (message.notification?.title == 'Accept Offer') {
         Get.to(() => DriverRequestNotificationScreen(message: message));
       }
     } else {
