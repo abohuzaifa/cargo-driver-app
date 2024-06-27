@@ -122,7 +122,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     CustomButton(
                         buttonText: "Proceed",
                         onPress: () {
-                          Get.to(() =>  ChatPage());
+                          Get.to(() => ChatPage());
                         })
                   ]),
             ))));

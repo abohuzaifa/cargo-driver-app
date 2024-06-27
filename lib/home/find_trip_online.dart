@@ -56,8 +56,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
-          "Authorization":
-              "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+          "Authorization": "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
         },
         body: {
           'id': requestId,

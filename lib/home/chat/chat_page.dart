@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,26 +13,73 @@ import 'dart:convert';
 
 class ChatPage extends StatefulWidget {
   final RemoteMessage?
-  message; // Define a nullable variable to store the message
+      message; // Define a nullable variable to store the message
 
   ChatPage({Key? key, this.message}) : super(key: key);
+
   @override
   _ChatPageState createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
-  List<Message> chatList = [];
+  List<MDMessages> chatList = [];
+  RxBool isLoading = false.obs;
+  Timer? timer; // Declare timer variable here
 
   @override
-  void initState() {
+  initState() {
+    HttpOverrides.global = MyHttpOverrides();
+
     // TODO: implement initState
     super.initState();
+    print('widget.message!.data====${widget.message?.data}');
+    if (widget.message != null) {
+      String requestId = widget.message!.data['request_id'];
+      getChat(requestId); // Initial call to getChat
+      // Start periodic timer to fetch chat every 5 seconds
+      timer = Timer.periodic(Duration(seconds: 5), (Timer t) {
+        getChat(requestId);
+      });
+    }
+  }
+
+  Future<void> getChat(String requestId) async {
+    const String url = 'https://delivershipment.com/public/api/getChat';
+
+    try {
+      final http.Response response = await http.post(
+        Uri.parse(url),
+        headers: <String, String>{
+          "Authorization":
+              "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+        },
+        body: {
+          'request_id': requestId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> responseData = jsonDecode(response.body);
+        List<MDMessages> messages =
+            responseData.map((json) => MDMessages.fromJson(json)).toList();
+
+        setState(() {
+          // Add only new messages to the existing chatList
+          chatList.addAll(messages.where((message) => !chatList
+              .any((existingMessage) => existingMessage.id == message.id)));
+        });
+      } else {
+        print('Failed to load chat data. Status code: ${response.statusCode}');
+        print('response.body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
   }
 
   // Function to retrieve the request_id from SharedPreferences
   Future<String?> getRequestId() async {
-    HttpOverrides.global = MyHttpOverrides();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('request_id');
   }
@@ -42,7 +90,7 @@ class _ChatPageState extends State<ChatPage> {
     if (_controller.text.isNotEmpty) {
       String messageText = _controller.text;
       setState(() {
-        chatList.add(Message(text: messageText, isMe: true));
+        chatList.add(MDMessages(text: messageText, isDriver: '0', isUser: '1'));
         _controller.clear();
       });
       print('text==${messageText}');
@@ -53,7 +101,8 @@ class _ChatPageState extends State<ChatPage> {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}'
+          'Authorization':
+              'Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}'
         },
         body: json.encode({
           'text': messageText,
@@ -72,6 +121,12 @@ class _ChatPageState extends State<ChatPage> {
         print('Failed to send message ==========${response.body}');
       }
     }
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
   }
 
   @override
@@ -124,22 +179,34 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
             ),
-            Expanded(
-              flex: 1,
-              child: CustomScrollView(
-                slivers: [
-                  SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                    childCount: chatList.length,
-                    (context, index) => Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: buildChatBubble(
-                          chatList[index].isMe, chatList[index].text),
+            isLoading.value == true
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.blueGrey,
                     ),
-                  ))
-                ],
-              ),
-            ),
+                  )
+                : Expanded(
+                    flex: 1,
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.all(4.0),
+                                child: buildChatBubble(
+                                  chatList[index].text!,
+                                  chatList[index].isUser!,
+                                  chatList[index].isDriver!,
+                                ),
+                              );
+                            },
+                            childCount: chatList.length,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
             Padding(
               padding: EdgeInsets.all(8.0.h),
               child: Row(
@@ -188,24 +255,33 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget buildChatBubble(bool isMe, String message) {
+  Widget buildChatBubble(String message, String user, String driver) {
     return Row(
-      mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: driver == '0' && user == '1'
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: [
-        isMe
+        driver == '0' && user == '1'
             ? const SizedBox()
             : const CircleAvatar(
                 backgroundColor: Color(0xffBCA37F),
               ),
+        SizedBox(
+          width: 5.sp,
+        ),
         Container(
           padding: EdgeInsets.all(10.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: isMe ? textcyanColor : const Color(0xffFFF2D8),
+            color: driver == '0' && user == '1'
+                ? textcyanColor
+                : const Color(0xffFFF2D8),
           ),
           child: Text(
             message,
-            style: TextStyle(color: isMe ? Colors.white : Colors.black),
+            style: TextStyle(
+                color:
+                    driver == '0' && user == '1' ? Colors.white : Colors.black),
           ),
         )
       ],
@@ -213,11 +289,57 @@ class _ChatPageState extends State<ChatPage> {
   }
 }
 
-class Message {
-  final String text;
-  final bool isMe;
+class MDMessages {
+  int? id;
+  String? text;
+  String? userId;
+  String? requestId;
+  String? isDriver;
+  String? isUser;
+  Null? docs;
+  String? isRead;
+  String? createdAt;
+  String? updatedAt;
 
-  Message({required this.text, required this.isMe});
+  MDMessages(
+      {this.id,
+      this.text,
+      this.userId,
+      this.requestId,
+      this.isDriver,
+      this.isUser,
+      this.docs,
+      this.isRead,
+      this.createdAt,
+      this.updatedAt});
+
+  MDMessages.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    text = json['text'];
+    userId = json['user_id'];
+    requestId = json['request_id'];
+    isDriver = json['is_driver'];
+    isUser = json['is_user'];
+    docs = json['docs'];
+    isRead = json['is_read'];
+    createdAt = json['created_at'];
+    updatedAt = json['updated_at'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
+    data['text'] = this.text;
+    data['user_id'] = this.userId;
+    data['request_id'] = this.requestId;
+    data['is_driver'] = this.isDriver;
+    data['is_user'] = this.isUser;
+    data['docs'] = this.docs;
+    data['is_read'] = this.isRead;
+    data['created_at'] = this.createdAt;
+    data['updated_at'] = this.updatedAt;
+    return data;
+  }
 }
 
 class MyHttpOverrides extends HttpOverrides {

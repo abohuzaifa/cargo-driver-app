@@ -148,6 +148,10 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> {
                 name: '/driverRequest',
                 page: () =>
                     DriverRequestNotificationScreen(message: _initialMessage)),
+            GetPage(
+                name: '/chatPage',
+                page: () =>
+                    ChatPage(message: _initialMessage)),
           ],
         );
       },
