@@ -26,6 +26,8 @@ class _ChatPageState extends State<ChatPage> {
   List<MDMessages> chatList = [];
   RxBool isLoading = false.obs;
   Timer? timer; // Declare timer variable here
+  final ScrollController _scrollController = ScrollController();
+
 
   @override
   initState() {
@@ -68,6 +70,14 @@ class _ChatPageState extends State<ChatPage> {
           // Add only new messages to the existing chatList
           chatList.addAll(messages.where((message) => !chatList
               .any((existingMessage) => existingMessage.id == message.id)));
+          // Scroll to the last message
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
         });
       } else {
         print('Failed to load chat data. Status code: ${response.statusCode}');
@@ -185,28 +195,31 @@ class _ChatPageState extends State<ChatPage> {
                       color: Colors.blueGrey,
                     ),
                   )
-                : Expanded(
-                    flex: 1,
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: buildChatBubble(
-                                  chatList[index].text!,
-                                  chatList[index].isUser!,
-                                  chatList[index].isDriver!,
-                                ),
-                              );
-                            },
-                            childCount: chatList.length,
+                :
+            Expanded(
+              flex: 1,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: buildChatBubble(
+                            chatList[index].text!,
+                            chatList[index].isUser!,
+                            chatList[index].isDriver!,
                           ),
-                        ),
-                      ],
+                        );
+                      },
+                      childCount: chatList.length,
                     ),
                   ),
+                ],
+              ),
+            ),
+
             Padding(
               padding: EdgeInsets.all(8.0.h),
               child: Row(
