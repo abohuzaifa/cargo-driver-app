@@ -845,9 +845,11 @@ Widget newRequest(List<TripData> data, ScrollController scrollController) {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(data[index].user?.name ?? ''),
-                          Text(
-                            '${data[index].parcelAddress} To ${data[index].receiverAddress}',
-                            style: const TextStyle(fontSize: 11),
+                          Expanded(
+                            child: Text(
+                              '${data[index].parcelAddress} To ${data[index].receiverAddress}',
+                              style: const TextStyle(fontSize: 11),
+                            ),
                           )
                         ],
                       )

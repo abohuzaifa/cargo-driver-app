@@ -17,6 +17,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 import 'api/auth_controller.dart';
 import 'bindings/contorller_binding.dart';
 import 'fcm_handle.dart';
@@ -26,7 +27,36 @@ import 'home/driver_request_notification_screen.dart';
 import 'home/find_trip_online.dart';
 import 'package:http/http.dart' as http;
 
-late Position position;
+// @pragma('vm:entry-point')
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) async {
+//     switch (task) {
+//       case "locationUpdate":
+//         try {
+//           position = await Geolocator.getCurrentPosition(
+//               desiredAccuracy: LocationAccuracy.low,
+//               // Adjust accuracy for battery usage
+//               forceAndroidLocationManager:
+//                   true); // May improve background reliability on Android
+//           await createHistory(
+//               isEnd: '0',
+//               isStart: '1'); // Replace with your actual API call logic
+//         } on PlatformException catch (error) {
+//           debugPrint('Error getting location: $error');
+//           // Handle platform-specific errors (e.g., permission denied)
+//         } catch (error) {
+//           debugPrint('General error: $error');
+//           // Handle general errors (e.g., network issues)
+//         }
+//         break;
+//       default:
+//         print("Unknown task: $task");
+//     }
+//     return Future.value(true);
+//   });
+// }
+
+Position? position; // Declare as nullable
 RxBool receivedReq = false.obs;
 String? fcmToken;
 var address = Rx<String>('');
@@ -134,17 +164,22 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
-// Initialize SharedPreferences and AuthRepo
-  final SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+  // Initialize SharedPreferences and AuthRepo
+  final SharedPreferences sharedPreferences =
+      await SharedPreferences.getInstance();
   final AuthRepo authRepo = AuthRepo(sharedPreferences: sharedPreferences);
 
   // Register AuthController with GetX
   if (!Get.isRegistered<AuthController>()) {
     Get.put(AuthController(authRepo: authRepo));
   }
+
   // Retrieve request_id from SharedPreferences
   String? requestId = sharedPreferences.getString('request_id');
   print('Retrieved request_id: $requestId');
+
+  // Save a test value in SharedPreferences
   SharedPreferences preferences = await SharedPreferences.getInstance();
   await preferences.setString("hello", "world");
 
@@ -152,6 +187,13 @@ void onStart(ServiceInstance service) async {
       FlutterLocalNotificationsPlugin();
 
   if (service is AndroidServiceInstance) {
+    // Set the service as a foreground service and display the initial notification
+    service.setAsForegroundService();
+    service.setForegroundNotificationInfo(
+      title: "My App Service",
+      content: "Fetching location periodically",
+    );
+
     service.on('setAsForeground').listen((event) {
       service.setAsForegroundService();
     });
@@ -168,26 +210,25 @@ void onStart(ServiceInstance service) async {
   Timer.periodic(const Duration(seconds: 20), (timer) async {
     print('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
 
+    // Ensure the service is running in the foreground
+    if (service is AndroidServiceInstance &&
+        !await service.isForegroundService()) {
+      print('Service is not in foreground, stopping task execution');
+      return;
+    }
+
     try {
+      // Obtain the current position
       position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      print(
-          'Position obtained: latitude=${position.latitude}, longitude=${position.longitude}');
+      print('Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
+      await createHistory(isStart: '1', isEnd:'0');
     } catch (e) {
       print('Error obtaining position: $e');
       return;
     }
 
-    try {
-      bool historyCreated = await createHistory(isStart: '1', isEnd: '0', requestId : requestId );
-      if (historyCreated) {
-        print('History successfully created');
-      } else {
-        print('History creation failed');
-      }
-    } catch (e) {
-      print('Error creating history: $e');
-    }
+
 
     final deviceInfo = DeviceInfoPlugin();
     String? device;
@@ -207,18 +248,20 @@ void onStart(ServiceInstance service) async {
       print('Error obtaining device info: $e');
     }
 
+    // Invoke the update method with the current data
     service.invoke(
       'update',
       {
         "current_date": DateTime.now().toIso8601String(),
         "device": device,
         "location": {
-          "latitude": position.latitude,
-          "longitude": position.longitude,
+          "latitude": position!.latitude,
+          "longitude": position!.longitude,
         },
       },
     );
 
+    // Display a notification if the service is running in the foreground
     if (service is AndroidServiceInstance &&
         await service.isForegroundService()) {
       flutterLocalNotificationsPlugin.show(
@@ -265,14 +308,11 @@ Future<String?> getRequestId() async {
 Future<bool> createHistory({
   required String isStart,
   required String isEnd,
-  required requestId
 }) async {
-
-
-
 // Retrieve the request_id
-  address.value = await getAddress(position.latitude, position.longitude);
-
+  address.value = await getAddress(position!.latitude, position!.longitude);
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? requestId = prefs.getString('request_id');
   final url = Uri.parse('http://delivershipment.com/api/createHistory');
   final headers = {
     'Content-Type': 'application/json',
@@ -282,13 +322,14 @@ Future<bool> createHistory({
   };
   final body = jsonEncode({
     'request_id': requestId,
-    'lat': position.latitude,
-    'long': position.longitude,
+    'lat': position!.latitude,
+    'long': position!.longitude,
     'address': address.value,
     'is_start': isStart,
     'is_end': isEnd,
   });
-  print('Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');
+  print(
+      'Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');
   print('body=${body}');
 
   try {
@@ -298,6 +339,9 @@ Future<bool> createHistory({
       // Successfully created history
       print('Successful to create history');
       print('Response body: ${response.body}');
+      await saveLastRequestDetails(url.toString(), headers.toString(), body,
+          response.statusCode, response.body);
+
       return true;
       // isRideStarted.value = true;
       // _startPeriodicHistoryUpdates();
@@ -310,14 +354,49 @@ Future<bool> createHistory({
   } catch (e) {
     // Exception handling
     print('Exception caught: $e');
+    await saveLastRequestException(
+        url.toString(), headers.toString(), body, e.toString());
+
     return false;
   }
+}
+
+// Function to save last request details locally
+Future<void> saveLastRequestDetails(String url, String headers, String body,
+    int statusCode, String responseBody) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('last_request_url', url);
+  prefs.setString('last_request_headers', headers);
+  prefs.setString('last_request_body', body);
+  prefs.setInt('last_response_status_code', statusCode);
+  prefs.setString('last_response_body', responseBody);
+}
+
+// Function to save last request exception details locally
+Future<void> saveLastRequestException(
+    String url, String headers, String body, String exception) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('last_request_url', url);
+  prefs.setString('last_request_headers', headers);
+  prefs.setString('last_request_body', body);
+  prefs.setString('last_request_exception', exception);
+}
+
+void startBackgroundService() {
+  const platform = MethodChannel('com.tarudDriver.app/background_service');
+  platform.invokeMethod('startService');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
-
+  startBackgroundService();
+  // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  // Workmanager().registerPeriodicTask(
+  //   "locationUpdate",
+  //   "fetchLocationAndHitAPI",
+  //   frequency: Duration(minutes: 15),
+  // );
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp();
   }
@@ -339,7 +418,8 @@ class CargoDeleiveryApp extends StatefulWidget {
   State<CargoDeleiveryApp> createState() => _CargoDeleiveryAppState();
 }
 
-class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> with WidgetsBindingObserver {
+class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
+    with WidgetsBindingObserver {
   final _messagingService = MessagingService();
   RemoteMessage? _initialMessage;
   bool _isSplashDone = false;
@@ -347,15 +427,48 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp> with WidgetsBindi
   @override
   void initState() {
     _messagingService.init(context);
-
     super.initState();
     _setupInteractedMessage();
+    WidgetsBinding.instance.addObserver(this); // Add observer for lifecycle changes
+    _startBackgroundService();
+  }
+  Future<void> _startBackgroundService() async {
+    const MethodChannel('yourapp/background_service')
+        .invokeMethod('startService');
+  }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // Remove observer to prevent memory leaks
+    super.dispose();
   }
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       FlutterBackgroundService().startService();
     } else if (state == AppLifecycleState.resumed) {
       FlutterBackgroundService().invoke('stopService');
+      printStoredLogs();
+    }
+  }
+
+  Future<void> printStoredLogs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? lastRequestUrl = prefs.getString('last_request_url');
+    String? lastRequestHeaders = prefs.getString('last_request_headers');
+    String? lastRequestBody = prefs.getString('last_request_body');
+    int? lastResponseStatusCode = prefs.getInt('last_response_status_code');
+    String? lastResponseBody = prefs.getString('last_response_body');
+    String? lastRequestException = prefs.getString('last_request_exception');
+
+    print('Last Request URL: $lastRequestUrl');
+    print('Last Request Headers: $lastRequestHeaders');
+    print('Last Request Body: $lastRequestBody');
+    if (lastResponseStatusCode != null) {
+      print('Last Response Status Code: $lastResponseStatusCode');
+      print('Last Response Body: $lastResponseBody');
+    } else if (lastRequestException != null) {
+      print('Last Request Exception: $lastRequestException');
+    } else {
+      print('No response or exception stored.');
     }
   }
 
