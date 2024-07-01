@@ -56,7 +56,8 @@ class _FindTripOnlineState extends State<FindTripOnline> {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
-          "Authorization": "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+          "Authorization":
+              "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
         },
         body: {
           'id': requestId,
@@ -188,7 +189,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                   onCameraIdle: () async {},
                 ),
               ),
-              newRequest(_trips, _scrollController),
+              //newRequest(_trips, _scrollController),
               requestReceived.value == true && requestAccepted.value == false
                   ? Container(
                       decoration: BoxDecoration(

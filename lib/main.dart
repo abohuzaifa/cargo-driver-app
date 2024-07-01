@@ -27,6 +27,17 @@ import 'home/driver_request_notification_screen.dart';
 import 'home/find_trip_online.dart';
 import 'package:http/http.dart' as http;
 
+void setPreferences() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('isStart', '0');
+  await prefs.setString('isEnd', '0');
+  print('Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
+  print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
+}
+
+
+
+
 // @pragma('vm:entry-point')
 // void callbackDispatcher() {
 //   Workmanager().executeTask((task, inputData) async {
@@ -168,6 +179,7 @@ void onStart(ServiceInstance service) async {
   // Initialize SharedPreferences and AuthRepo
   final SharedPreferences sharedPreferences =
       await SharedPreferences.getInstance();
+
   final AuthRepo authRepo = AuthRepo(sharedPreferences: sharedPreferences);
 
   // Register AuthController with GetX
@@ -207,7 +219,7 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
 
-  Timer.periodic(const Duration(seconds: 20), (timer) async {
+  Timer.periodic(const Duration(minutes: 1), (timer) async {
     print('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
 
     // Ensure the service is running in the foreground
@@ -217,18 +229,23 @@ void onStart(ServiceInstance service) async {
       return;
     }
 
+    // Retrieve the updated values for isStart and isEnd
+    sharedPreferences.reload();  // Ensure you reload the preferences
+    String? isStart = sharedPreferences.getString('isStart');
+    String? isEnd = sharedPreferences.getString('isEnd');
+    print('Background: Retrieved isStart: $isStart, isEnd: $isEnd');
+
     try {
       // Obtain the current position
       position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      print('Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
-      await createHistory(isStart: '1', isEnd:'0');
+      print(
+          'Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
+      await createHistory();
     } catch (e) {
       print('Error obtaining position: $e');
       return;
     }
-
-
 
     final deviceInfo = DeviceInfoPlugin();
     String? device;
@@ -305,14 +322,14 @@ Future<String?> getRequestId() async {
   return prefs.getString('request_id');
 }
 
-Future<bool> createHistory({
-  required String isStart,
-  required String isEnd,
-}) async {
+Future<bool> createHistory() async {
 // Retrieve the request_id
   address.value = await getAddress(position!.latitude, position!.longitude);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? requestId = prefs.getString('request_id');
+  String? isStart = prefs.getString('isStart');
+  String? isEnd = prefs.getString('isEnd');
+
   final url = Uri.parse('http://delivershipment.com/api/createHistory');
   final headers = {
     'Content-Type': 'application/json',
@@ -337,10 +354,8 @@ Future<bool> createHistory({
 
     if (response.statusCode == 200) {
       // Successfully created history
-      print('Successful to create history');
+      print('Successful to create history In Background');
       print('Response body: ${response.body}');
-      await saveLastRequestDetails(url.toString(), headers.toString(), body,
-          response.statusCode, response.body);
 
       return true;
       // isRideStarted.value = true;
@@ -354,32 +369,9 @@ Future<bool> createHistory({
   } catch (e) {
     // Exception handling
     print('Exception caught: $e');
-    await saveLastRequestException(
-        url.toString(), headers.toString(), body, e.toString());
 
     return false;
   }
-}
-
-// Function to save last request details locally
-Future<void> saveLastRequestDetails(String url, String headers, String body,
-    int statusCode, String responseBody) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  prefs.setString('last_request_url', url);
-  prefs.setString('last_request_headers', headers);
-  prefs.setString('last_request_body', body);
-  prefs.setInt('last_response_status_code', statusCode);
-  prefs.setString('last_response_body', responseBody);
-}
-
-// Function to save last request exception details locally
-Future<void> saveLastRequestException(
-    String url, String headers, String body, String exception) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  prefs.setString('last_request_url', url);
-  prefs.setString('last_request_headers', headers);
-  prefs.setString('last_request_body', body);
-  prefs.setString('last_request_exception', exception);
 }
 
 void startBackgroundService() {
@@ -429,18 +421,23 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
     _messagingService.init(context);
     super.initState();
     _setupInteractedMessage();
-    WidgetsBinding.instance.addObserver(this); // Add observer for lifecycle changes
+    WidgetsBinding.instance
+        .addObserver(this); // Add observer for lifecycle changes
     _startBackgroundService();
   }
+
   Future<void> _startBackgroundService() async {
     const MethodChannel('yourapp/background_service')
         .invokeMethod('startService');
   }
+
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Remove observer to prevent memory leaks
+    WidgetsBinding.instance
+        .removeObserver(this); // Remove observer to prevent memory leaks
     super.dispose();
   }
+
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       FlutterBackgroundService().startService();
@@ -487,11 +484,15 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
     });
   }
 
-  void _handleMessage(RemoteMessage message) {
+  Future<void> _handleMessage(RemoteMessage message) async {
     // Navigate to the desired screen with the message data
     if (message.notification?.title == 'New request') {
       Get.to(() => FindTripOnline(message: message));
     } else if (message.notification?.title == 'Accept Offer') {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('acceptOffer', true);
+      await prefs.setString('isStart', '1');
+      await prefs.setString('isEnd', '0');
       Get.to(() => DriverRequestNotificationScreen(message: message));
     } else if (message.notification?.title == 'New Message') {
       Get.to(() => ChatPage(message: message));
@@ -519,13 +520,21 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
           debugShowCheckedModeBanner: false,
           title: 'Cargo App',
           home: SplashScreen(
-            onInitializationComplete: () {
+            onInitializationComplete: () async {
               _isSplashDone = true;
               _navigateToInitialRoute();
-              if (_initialMessage == null) {
-                Get.offAll(() => Get.find<AuthController>().isLogedIn()
-                    ? const LocationPage()
-                    : const WelcomeScreen());
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              bool acceptOffer = prefs.getBool('acceptOffer') ?? false;
+
+              if (acceptOffer) {
+                Get.offAll(() =>
+                    DriverRequestNotificationScreen(message: _initialMessage));
+              } else {
+                if (_initialMessage == null) {
+                  Get.offAll(() => Get.find<AuthController>().isLogedIn()
+                      ? const LocationPage()
+                      : const WelcomeScreen());
+                }
               }
             },
           ),
