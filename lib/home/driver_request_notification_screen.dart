@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../api/user_repo.dart';
@@ -35,21 +33,6 @@ class _DriverRequestNotificationScreenState
   void initState() {
     super.initState();
     controller = Get.put(RideTrackingController(userRepo: UserRepo()));
-
-    // Add the initial message to the stream if it exists
-    if (widget.message != null) {
-      _messageStreamController.add(widget.message);
-    }
-
-    // Listen to the stream and perform the desired operation
-    _messageStreamController.stream.listen((message) async {
-      if (message != null) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('message', message.data.toString());
-        print(
-            'Message stored in SharedPreferences: ${message.data.toString()}');
-      }
-    });
   }
 
   @override
@@ -78,16 +61,23 @@ class _DriverRequestNotificationScreenState
           ),
           child: Scaffold(
             bottomSheet: Padding(
-              padding: const EdgeInsets.all(30.0),
-              child: CustomButton(
-                buttonText: "Proceed",
-                onPress: () {
-                  // controller.createHistory(isStart: '1', isEnd: '0');
-                  controller.setParcelLocationToCurrent();
-                  // Get.to(() => const BottomBarScreen());
-                },
-              ),
-            ),
+                padding: const EdgeInsets.all(30.0),
+                child: controller.isOfferAccepted.value == true
+                    ? CustomButton(
+                        buttonText: "Proceed",
+                        onPress: () {
+                          controller.createHistory(isStart: '1', isEnd: '0');
+                          controller.startLocationCheckIfNearByHundredMeters();
+                          // Get.to(() => const BottomBarScreen());
+                        },
+                      )
+                    : Text(
+                        'Waiting for User to accpet your Offer',
+                        style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600),
+                      )),
             backgroundColor: Colors.transparent,
             body: Stack(
               alignment: Alignment.center,
@@ -188,9 +178,9 @@ class _DriverRequestNotificationScreenState
                                                 0.06,
                                         child: ElevatedButton(
                                           onPressed: () async {
-                                            // Handle accept action
+                                            // Handle yes action
                                             setPreferences();
-                                            },
+                                          },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.grey,
                                           ),

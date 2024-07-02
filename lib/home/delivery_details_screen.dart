@@ -152,7 +152,7 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
               CustomButton(
                   buttonText: "Submit",
                   onPress: () {
-                    Get.to(() => const DriverRequestNotificationScreen());
+                    Get.offAll(() => const DriverRequestNotificationScreen());
                   })
             ],
           ),

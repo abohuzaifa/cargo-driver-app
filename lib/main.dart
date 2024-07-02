@@ -31,12 +31,10 @@ void setPreferences() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('isStart', '0');
   await prefs.setString('isEnd', '0');
-  print('Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
+  print(
+      'Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
   print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
 }
-
-
-
 
 // @pragma('vm:entry-point')
 // void callbackDispatcher() {
@@ -230,7 +228,7 @@ void onStart(ServiceInstance service) async {
     }
 
     // Retrieve the updated values for isStart and isEnd
-    sharedPreferences.reload();  // Ensure you reload the preferences
+    sharedPreferences.reload(); // Ensure you reload the preferences
     String? isStart = sharedPreferences.getString('isStart');
     String? isEnd = sharedPreferences.getString('isEnd');
     print('Background: Retrieved isStart: $isStart, isEnd: $isEnd');
@@ -383,12 +381,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeService();
   startBackgroundService();
-  // Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  // Workmanager().registerPeriodicTask(
-  //   "locationUpdate",
-  //   "fetchLocationAndHitAPI",
-  //   frequency: Duration(minutes: 15),
-  // );
+
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp();
   }
@@ -493,8 +486,10 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
       await prefs.setBool('acceptOffer', true);
       await prefs.setString('isStart', '1');
       await prefs.setString('isEnd', '0');
-      Get.to(() => DriverRequestNotificationScreen(message: message));
-    } else if (message.notification?.title == 'New Message') {
+      Get.offAll(() => DriverRequestNotificationScreen(message: message));
+    }
+
+    else if (message.notification?.title == 'New Message') {
       Get.to(() => ChatPage(message: message));
     }
   }
@@ -525,8 +520,9 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
               _navigateToInitialRoute();
               SharedPreferences prefs = await SharedPreferences.getInstance();
               bool acceptOffer = prefs.getBool('acceptOffer') ?? false;
+              bool hasBidAndWaiting = prefs.getBool('hasBidAndWaiting') ?? false;
 
-              if (acceptOffer) {
+              if (acceptOffer || hasBidAndWaiting) {
                 Get.offAll(() =>
                     DriverRequestNotificationScreen(message: _initialMessage));
               } else {

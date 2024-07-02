@@ -10,6 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:get/get_rx/get_rx.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:get/state_manager.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/auth_controller.dart';
@@ -50,14 +51,16 @@ class RideTrackingController extends GetxController implements GetxService {
   List<LatLng> pathPoints = [];
   final Set<Polyline> polylines = {};
   late PolylinePoints polylinePoints;
+  RxBool isOfferAccepted = false.obs;
 
   @override
   Future<void> onInit() async {
     super.onInit();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    isOfferAccepted.value = prefs.getBool('acceptOffer') ?? false;
 
     init();
     // initClient();
-    startLocationCheckIfNearByHundredMeters();
   }
 
   // @override
@@ -409,7 +412,7 @@ class RideTrackingController extends GetxController implements GetxService {
     var response =
         await userRepo.bidOnUserRequest(requestId: requestId, amount: amount);
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
-      Get.to(() => const DriverRequestNotificationScreen());
+      Get.offAll(() => const DriverRequestNotificationScreen());
     }
   }
 

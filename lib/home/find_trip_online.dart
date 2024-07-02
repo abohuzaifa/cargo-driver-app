@@ -488,6 +488,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                         SharedPreferences
                                                                             prefs =
                                                                             await SharedPreferences.getInstance();
+                                                                        prefs.setBool('hasBidAndWaiting', true);
 
                                                                         print(
                                                                             'amountController.text=${amonutController.text}');

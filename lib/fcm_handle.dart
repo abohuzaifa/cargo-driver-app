@@ -169,7 +169,7 @@ class MessagingService {
       Get.to(() => FindTripOnline(message: message));
     } else if (message.notification?.title == 'Accept Offer') {
       Get.offAll(() => BottomBarScreen());
-      Get.to(() => DriverRequestNotificationScreen(message: message));
+      Get.offAll(() => DriverRequestNotificationScreen(message: message));
     }
     if (message.data.isNotEmpty) {
       debugPrint('Message data: ${message.data}');
@@ -177,7 +177,7 @@ class MessagingService {
       if (message.notification?.title == 'New request') {
         Get.to(() => FindTripOnline(message: message));
       } else if (message.notification?.title == 'Accept Offer') {
-        Get.to(() => DriverRequestNotificationScreen(message: message));
+        Get.offAll(() => DriverRequestNotificationScreen(message: message));
       }
     } else {
       debugPrint('Message data is empty');
