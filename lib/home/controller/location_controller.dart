@@ -16,10 +16,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../api/api_constants.dart';
 import '../../api/user_repo.dart';
 import '../bottom_navbar.dart';
+import '../driver_request_notification_screen.dart';
 
 class LocationController extends GetxController implements GetxService {
   final UserRepo userRepo;
+
   LocationController({required this.userRepo});
+
   late LatLng _gpsActual;
 
   LatLng _initialPosition = const LatLng(-12.122711, -77.027475);
@@ -27,6 +30,7 @@ class LocationController extends GetxController implements GetxService {
   List<LatLng> polylineCoordinates = [];
   final Set<Polyline> polyline = {};
   late PolylinePoints polylinePoints;
+
   Future<void> setPolyLines(
       {required LatLng sourceLocation,
       required LatLng destinationLocation,
@@ -158,6 +162,7 @@ class LocationController extends GetxController implements GetxService {
     );
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       Get.to(() => const BottomBarScreen());
+      // Get.to(() => const DriverRequestNotificationScreen());
     } else {
       showCupertinoModalPopup(
         context: Get.context!,

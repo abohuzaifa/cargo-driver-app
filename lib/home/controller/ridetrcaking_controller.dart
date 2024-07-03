@@ -52,39 +52,16 @@ class RideTrackingController extends GetxController implements GetxService {
   final Set<Polyline> polylines = {};
   late PolylinePoints polylinePoints;
   RxBool isOfferAccepted = false.obs;
+  Position? currentPosition;
+  LatLng? currentLocation;
 
   @override
   Future<void> onInit() async {
     super.onInit();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     isOfferAccepted.value = prefs.getBool('acceptOffer') ?? false;
-
     init();
     // initClient();
-  }
-
-  // @override
-  // Future<void> onReady() async {
-  //   super.onReady();
-  //   try {
-  //     Position currentPosition = await Geolocator.getCurrentPosition(
-  //         desiredAccuracy: LocationAccuracy.high);
-  //     latitude.value = currentPosition.latitude;
-  //     longitude.value = currentPosition.longitude;
-  //     update();
-  //     log('Current Location: $currentPosition');
-  //     updatePolyLinesAndMarkers(currentPosition);
-  //   } catch (e) {
-  //     log('Failed to get current location: '
-  //         '$e');
-  //     return;
-  //   }
-  // }
-
-  @override
-  void onClose() {
-    streamSubscription.cancel();
-    super.onClose();
   }
 
   Future<void> init() async {
@@ -100,13 +77,13 @@ class RideTrackingController extends GetxController implements GetxService {
         const ImageConfiguration(devicePixelRatio: 2.5),
         'assets/images/driver_way.png');
     try {
-      Position currentPosition = await Geolocator.getCurrentPosition(
+      currentPosition = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
-      latitude.value = currentPosition.latitude;
-      longitude.value = currentPosition.longitude;
+      latitude.value = currentPosition!.latitude;
+      longitude.value = currentPosition!.longitude;
       update();
       log('Current Location: $currentPosition');
-      updatePolyLinesAndMarkers(currentPosition);
+      updatePolyLinesAndMarkers(currentPosition!);
     } catch (e) {
       log('Failed to get current location: '
           '$e');
@@ -237,8 +214,6 @@ class RideTrackingController extends GetxController implements GetxService {
       var sourceToDestinationPoints =
           decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
-      pathPoints.clear();
-
       // Add current location to pathPoints
       pathPoints.add(currentLocation);
 
@@ -248,7 +223,6 @@ class RideTrackingController extends GetxController implements GetxService {
       // Add points from source to destination
       pathPoints.addAll(sourceToDestinationPoints);
 
-      polylines.clear();
       polylines.add(Polyline(
         polylineId: const PolylineId('poly'),
         color: const Color.fromARGB(255, 198, 40, 98),
