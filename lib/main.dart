@@ -487,9 +487,7 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
       await prefs.setString('isStart', '1');
       await prefs.setString('isEnd', '0');
       Get.offAll(() => DriverRequestNotificationScreen(message: message));
-    }
-
-    else if (message.notification?.title == 'New Message') {
+    } else if (message.notification?.title == 'New Message') {
       Get.to(() => ChatPage(message: message));
     }
   }
@@ -520,7 +518,8 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
               _navigateToInitialRoute();
               SharedPreferences prefs = await SharedPreferences.getInstance();
               bool acceptOffer = prefs.getBool('acceptOffer') ?? false;
-              bool hasBidAndWaiting = prefs.getBool('hasBidAndWaiting') ?? false;
+              bool hasBidAndWaiting =
+                  prefs.getBool('hasBidAndWaiting') ?? false;
 
               if (acceptOffer || hasBidAndWaiting) {
                 Get.offAll(() =>
