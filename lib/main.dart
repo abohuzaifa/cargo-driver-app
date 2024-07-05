@@ -17,7 +17,6 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
 import 'api/auth_controller.dart';
 import 'bindings/contorller_binding.dart';
 import 'fcm_handle.dart';
@@ -35,35 +34,6 @@ void setPreferences() async {
       'Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
   print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
 }
-
-// @pragma('vm:entry-point')
-// void callbackDispatcher() {
-//   Workmanager().executeTask((task, inputData) async {
-//     switch (task) {
-//       case "locationUpdate":
-//         try {
-//           position = await Geolocator.getCurrentPosition(
-//               desiredAccuracy: LocationAccuracy.low,
-//               // Adjust accuracy for battery usage
-//               forceAndroidLocationManager:
-//                   true); // May improve background reliability on Android
-//           await createHistory(
-//               isEnd: '0',
-//               isStart: '1'); // Replace with your actual API call logic
-//         } on PlatformException catch (error) {
-//           debugPrint('Error getting location: $error');
-//           // Handle platform-specific errors (e.g., permission denied)
-//         } catch (error) {
-//           debugPrint('General error: $error');
-//           // Handle general errors (e.g., network issues)
-//         }
-//         break;
-//       default:
-//         print("Unknown task: $task");
-//     }
-//     return Future.value(true);
-//   });
-// }
 
 Position? position; // Declare as nullable
 RxBool receivedReq = false.obs;
@@ -105,12 +75,12 @@ Future<void> initializeService() async {
     'my_foreground', // id
     'MY FOREGROUND SERVICE', // title
     description:
-        'This channel is used for important notifications.', // description
+    'This channel is used for important notifications.', // description
     importance: Importance.low, // importance must be at low or higher level
   );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   if (Platform.isIOS || Platform.isAndroid) {
     await flutterLocalNotificationsPlugin.initialize(
@@ -123,7 +93,7 @@ Future<void> initializeService() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
+      AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   await service.configure(
@@ -135,10 +105,10 @@ Future<void> initializeService() async {
       autoStart: true,
       isForegroundMode: true,
 
-      notificationChannelId: 'my_foreground',
-      initialNotificationTitle: 'AWESOME SERVICE',
-      initialNotificationContent: 'Initializing',
-      foregroundServiceNotificationId: 888,
+      // notificationChannelId: 'my_foreground',
+      // initialNotificationTitle: 'AWESOME SERVICE',
+      // initialNotificationContent: 'Initializing',
+      // foregroundServiceNotificationId: 888,
     ),
     iosConfiguration: IosConfiguration(
       // auto start service
@@ -176,7 +146,7 @@ void onStart(ServiceInstance service) async {
 
   // Initialize SharedPreferences and AuthRepo
   final SharedPreferences sharedPreferences =
-      await SharedPreferences.getInstance();
+  await SharedPreferences.getInstance();
 
   final AuthRepo authRepo = AuthRepo(sharedPreferences: sharedPreferences);
 
@@ -194,7 +164,7 @@ void onStart(ServiceInstance service) async {
   await preferences.setString("hello", "world");
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   if (service is AndroidServiceInstance) {
     // Set the service as a foreground service and display the initial notification
@@ -238,7 +208,8 @@ void onStart(ServiceInstance service) async {
       position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       print(
-          'Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
+          'Position obtained: latitude=${position!
+              .latitude}, longitude=${position!.longitude}');
       await createHistory();
     } catch (e) {
       print('Error obtaining position: $e');
@@ -304,7 +275,7 @@ void onStart(ServiceInstance service) async {
 Future<String> getAddress(double latitude, double longitude) async {
   try {
     List<Placemark> places =
-        await placemarkFromCoordinates(latitude, longitude);
+    await placemarkFromCoordinates(latitude, longitude);
     Placemark place = places.first;
     address.value = 'Address: ${place.locality}, ${place.country}';
   } catch (e) {
@@ -333,7 +304,10 @@ Future<bool> createHistory() async {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     "Authorization":
-        "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+    "Bearer ${Get
+        .find<AuthController>()
+        .authRepo
+        .getAuthToken()}"
   };
   final body = jsonEncode({
     'request_id': requestId,
@@ -344,7 +318,10 @@ Future<bool> createHistory() async {
     'is_end': isEnd,
   });
   print(
-      'Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');
+      'Get.find<AuthController>().authRepo.getAuthToken()======${Get
+          .find<AuthController>()
+          .authRepo
+          .getAuthToken()}');
   print('body=${body}');
 
   try {
@@ -372,28 +349,44 @@ Future<bool> createHistory() async {
   }
 }
 
+
 void startBackgroundService() {
   const platform = MethodChannel('com.tarudDriver.app/background_service');
   platform.invokeMethod('startService');
 }
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeService();
-  startBackgroundService();
+  HttpOverrides.global = MyHttpOverrides();
 
+  // Initialize Firebase
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp();
   }
-  SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(statusBarColor: Colors.transparent));
+
   await getFCMToken();
   await initNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  runApp(
-    const CargoDeleiveryApp(),
+  // Initialize and start the background service
+  await initializeService();
+  startBackgroundService();
+
+  // Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
+
+  runApp(const CargoDeleiveryApp());
 }
 
 class CargoDeleiveryApp extends StatefulWidget {
@@ -526,7 +519,8 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
                     DriverRequestNotificationScreen(message: _initialMessage));
               } else {
                 if (_initialMessage == null) {
-                  Get.offAll(() => Get.find<AuthController>().isLogedIn()
+                  Get.offAll(() =>
+                  Get.find<AuthController>().isLogedIn()
                       ? const LocationPage()
                       : const WelcomeScreen());
                 }

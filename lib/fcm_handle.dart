@@ -162,7 +162,8 @@ class MessagingService {
   }
 
   // Handling a notification click event by navigating to the specified screen
-  void _handleNotificationClick(BuildContext context, RemoteMessage message) {
+  Future<void> _handleNotificationClick(
+      BuildContext context, RemoteMessage message) async {
     // Check if the message contains data
     if (message.notification?.title == 'New request') {
       Get.offAll(() => BottomBarScreen());
@@ -177,6 +178,8 @@ class MessagingService {
       if (message.notification?.title == 'New request') {
         Get.to(() => FindTripOnline(message: message));
       } else if (message.notification?.title == 'Accept Offer') {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('acceptOffer', true);
         Get.offAll(() => DriverRequestNotificationScreen(message: message));
       }
     } else {

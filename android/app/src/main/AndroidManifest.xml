@@ -28,7 +28,7 @@
 
         <!-- Background Service -->
         <service
-            android:name="com.tarudDriver.app.BackgroundService"
+            android:name=".BackgroundService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="location|dataSync"

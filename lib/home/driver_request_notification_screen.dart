@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
@@ -181,10 +182,10 @@ class _DriverRequestNotificationScreenState
                         ? CustomButton(
                             buttonText: "Proceed",
                             onPress: () {
-                              controller.createHistory(
-                                  isStart: '1', isEnd: '0');
-                              controller
-                                  .startLocationCheckIfNearByHundredMeters();
+                              controller.setParcelLocationToReceiver();
+                              // controller.createHistory(
+                              //     isStart: '1', isEnd: '0');
+                              // controller.startLocationCheckIfNearByHundredMeters();
                               // Get.to(() => const BottomBarScreen());
                             },
                           )
@@ -340,6 +341,169 @@ class _DriverRequestNotificationScreenState
                           ),
                         )
                       : Container(),
+                  Obx(
+                    () => controller.isReceiverLocationReached.value
+                        ? Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            margin: EdgeInsets.symmetric(
+                                horizontal:
+                                    MediaQuery.of(context).size.width * 0.1),
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            width: MediaQuery.of(context).size.width * 0.8,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    margin: EdgeInsets.only(left: 20),
+                                    child: Text(
+                                      'Have you reached the destination?',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 20),
+                                  Column(
+                                    children: [
+                                      Container(
+                                        margin: EdgeInsets.only(
+                                            left: 20, right: 20),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Expanded(
+                                              child: SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.06,
+                                                child: ElevatedButton(
+                                                  onPressed: () async {
+                                                    // Handle yes action
+                                                    if (controller.codeController
+                                                        .text.isEmpty) {
+                                                      Get.snackbar('Alert',
+                                                          'Please Enter Code',
+                                                          backgroundColor:
+                                                              Colors.red);
+                                                    } else {
+                                                      controller.message=null;
+
+                                                      await controller
+                                                          .markCompleteRequest(
+                                                              code:
+                                                                  controller.codeController
+                                                                      .text);
+                                                    }
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.grey,
+                                                  ),
+                                                  child: Text('Yes',
+                                                      style: TextStyle(
+                                                          color: Colors.white)),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.05),
+                                            Expanded(
+                                              child: SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.06,
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    // Handle reject action
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.blueGrey,
+                                                  ),
+                                                  child: Text(
+                                                    'No',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      Container(
+                                        margin: EdgeInsets.only(left: 20),
+                                        child: Text(
+                                          'Enter Code',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
+                                      controller.isLoading.value == true
+                                          ? Center(
+                                              child: CircularProgressIndicator(
+                                                color: Colors.blueGrey,
+                                              ),
+                                            )
+                                          : Container(
+                                              height: 100,
+                                              width: 200,
+                                              child: TextField(
+                                                controller: controller.codeController,
+                                                decoration: InputDecoration(
+                                                  border: OutlineInputBorder(),
+                                                  contentPadding:
+                                                      EdgeInsets.all(10),
+                                                ),
+                                                maxLines: 1,
+                                                // Allow multiple lines if needed
+                                                textInputAction:
+                                                    TextInputAction.done,
+                                                // Show the done button
+                                                onSubmitted: (String value) {
+                                                  // Close the keyboard when text input is complete
+                                                  FocusScope.of(context)
+                                                      .unfocus();
+                                                },
+                                              ),
+                                            ),
+                                      controller.message != null
+                                          ? Text(
+                                              controller.message,
+                                              style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 15),
+                                            )
+                                          : Container()
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : Container(),
+                  )
                 ],
               ),
               floatingActionButton: FloatingActionButton(

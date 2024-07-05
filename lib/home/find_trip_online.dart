@@ -18,6 +18,7 @@ import '../constant/colors_utils.dart';
 import '../models/MDGetRequestData.dart';
 import '../profile/profile_page.dart';
 import '../widgets/custom_button.dart';
+import 'bottom_navbar.dart';
 import 'controller/location_controller.dart';
 import 'controller/ridetrcaking_controller.dart';
 
@@ -90,6 +91,55 @@ class _FindTripOnlineState extends State<FindTripOnline> {
       } else {
         // API call failed
         print('API call failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle error
+      print('API call error: $e');
+    }
+  }
+  Future<void> declineOffer(RemoteMessage? message) async {
+    print('message====${message!.data}');
+
+    // Extract the request_id from the message data
+    var requestId = message.data['request_id'];
+    const String apiUrl = 'https://delivershipment.com/api/declineOffer';
+
+    print('Request ID: $requestId');
+    print('API URL: $apiUrl');
+
+    // Prepare headers and body
+    final headers = {
+      "Authorization": "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+    };
+    final body = ({'offer_id': requestId});
+
+    // Print headers and body
+    print('Headers: $headers');
+    print('Body: $body');
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
+        body: body,
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        // API call was successful
+        print('API call successful');
+        final jsonResponse = json.decode(response.body);
+        setState(() {
+          requestReceived.value = false;
+        });
+        print('jsonResponse======${jsonResponse}');
+        Get.offAll(const BottomBarScreen());
+      } else {
+        // API call failed
+        print('API call failed with status: ${response.statusCode}');
+        print('API message: ${response.body}');
       }
     } catch (e) {
       // Handle error
@@ -488,7 +538,9 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                                                         SharedPreferences
                                                                             prefs =
                                                                             await SharedPreferences.getInstance();
-                                                                        prefs.setBool('hasBidAndWaiting', true);
+                                                                        prefs.setBool(
+                                                                            'hasBidAndWaiting',
+                                                                            true);
 
                                                                         print(
                                                                             'amountController.text=${amonutController.text}');
@@ -535,11 +587,9 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                               0.06,
                                       // Height adjusted for mobile devices
                                       child: ElevatedButton(
-                                        onPressed: () {
-                                          // Handle reject action
-                                          setState(() {
-                                            requestReceived.value = false;
-                                          });
+                                        onPressed: () async {
+                                          // Handle reject
+                                          await declineOffer(widget.message);
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors
@@ -863,3 +913,5 @@ Widget newRequest(List<TripData> data, ScrollController scrollController) {
           ),
   );
 }
+
+

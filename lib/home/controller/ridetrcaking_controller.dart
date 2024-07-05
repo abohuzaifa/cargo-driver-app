@@ -21,9 +21,13 @@ import 'dart:convert';
 
 class RideTrackingController extends GetxController implements GetxService {
   RxBool isRideStarted = false.obs;
+  RxBool isLoading = false.obs;
   RxBool isParcelLocationReached = false.obs;
+  RxBool isReceiverLocationReached = false.obs;
   late Timer _locationCheckTimer;
   late Timer _historyTimer;
+  var message;
+  TextEditingController codeController = TextEditingController();
 
   LatLng parcelLocation = LatLng(31.4926, 74.3925); // Example parcel location
 
@@ -47,7 +51,6 @@ class RideTrackingController extends GetxController implements GetxService {
   late BitmapDescriptor driverIcon;
   DateTime? lastPositionTime;
   LatLng? lastDriverLocation;
-
   List<LatLng> pathPoints = [];
   final Set<Polyline> polylines = {};
   late PolylinePoints polylinePoints;
@@ -123,6 +126,17 @@ class RideTrackingController extends GetxController implements GetxService {
     if (latitude.value == parcelLocation.latitude &&
         longitude.value == parcelLocation.longitude) {
       isParcelLocationReached.value = true;
+    }
+    update();
+  }
+
+  void setParcelLocationToReceiver() {
+    print(' In setParcelLocationToReceiver');
+    parcelLocation = LatLng(latitude.value, longitude.value);
+    print('parcelLocation======${parcelLocation}');
+    if (latitude.value == parcelLocation.latitude &&
+        longitude.value == parcelLocation.longitude) {
+      isReceiverLocationReached.value = true;
     }
     update();
   }
@@ -431,6 +445,54 @@ class RideTrackingController extends GetxController implements GetxService {
     double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
 
     return R * c;
+  }
+
+  Future<void> markCompleteRequest({
+    required String code,
+  }) async {
+    isLoading.value = true;
+    codeController.clear();
+    final url = Uri.parse('http://delivershipment.com/api/markCompleteRequest');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      "Authorization":
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+    };
+    final body = jsonEncode({
+      'code': code,
+    });
+    print('body=${body}');
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        // Successfully markCompleteRequest
+        isLoading.value = false;
+        print('Successful to markCompleteRequest');
+        print('Response body: ${response.body}');
+        Map<String, dynamic> responseBody = json.decode(response.body);
+// Access a specific field in the JSON map and store it in the message variable
+        if (responseBody.containsKey('msg')) {
+          message = responseBody['msg'];
+        } else {
+          message = 'Key "msg" not found in the response';
+        }
+      } else {
+        // Error markCompleteRequest
+        isLoading.value = false;
+
+        print(
+            'Failed to markCompleteRequest. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      // Exception handling
+      isLoading.value = false;
+
+      print('Exception caught: $e');
+    }
   }
 
   Future<void> createHistory({
