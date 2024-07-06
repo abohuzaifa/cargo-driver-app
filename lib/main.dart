@@ -75,12 +75,12 @@ Future<void> initializeService() async {
     'my_foreground', // id
     'MY FOREGROUND SERVICE', // title
     description:
-    'This channel is used for important notifications.', // description
+        'This channel is used for important notifications.', // description
     importance: Importance.low, // importance must be at low or higher level
   );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   if (Platform.isIOS || Platform.isAndroid) {
     await flutterLocalNotificationsPlugin.initialize(
@@ -93,7 +93,7 @@ Future<void> initializeService() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   await service.configure(
@@ -146,7 +146,7 @@ void onStart(ServiceInstance service) async {
 
   // Initialize SharedPreferences and AuthRepo
   final SharedPreferences sharedPreferences =
-  await SharedPreferences.getInstance();
+      await SharedPreferences.getInstance();
 
   final AuthRepo authRepo = AuthRepo(sharedPreferences: sharedPreferences);
 
@@ -164,28 +164,28 @@ void onStart(ServiceInstance service) async {
   await preferences.setString("hello", "world");
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
-  if (service is AndroidServiceInstance) {
-    // Set the service as a foreground service and display the initial notification
-    service.setAsForegroundService();
-    service.setForegroundNotificationInfo(
-      title: "My App Service",
-      content: "Fetching location periodically",
-    );
-
-    service.on('setAsForeground').listen((event) {
-      service.setAsForegroundService();
-    });
-
-    service.on('setAsBackground').listen((event) {
-      service.setAsBackgroundService();
-    });
-  }
-
-  service.on('stopService').listen((event) {
-    service.stopSelf();
-  });
+  // if (service is AndroidServiceInstance) {
+  //   // Set the service as a foreground service and display the initial notification
+  //   service.setAsForegroundService();
+  //   service.setForegroundNotificationInfo(
+  //     title: "My App Service",
+  //     content: "Fetching location periodically",
+  //   );
+  //
+  //   service.on('setAsForeground').listen((event) {
+  //     service.setAsForegroundService();
+  //   });
+  //
+  //   service.on('setAsBackground').listen((event) {
+  //     service.setAsBackgroundService();
+  //   });
+  // }
+  //
+  // service.on('stopService').listen((event) {
+  //   service.stopSelf();
+  // });
 
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     print('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
@@ -208,8 +208,7 @@ void onStart(ServiceInstance service) async {
       position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       print(
-          'Position obtained: latitude=${position!
-              .latitude}, longitude=${position!.longitude}');
+          'Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
       await createHistory();
     } catch (e) {
       print('Error obtaining position: $e');
@@ -275,7 +274,7 @@ void onStart(ServiceInstance service) async {
 Future<String> getAddress(double latitude, double longitude) async {
   try {
     List<Placemark> places =
-    await placemarkFromCoordinates(latitude, longitude);
+        await placemarkFromCoordinates(latitude, longitude);
     Placemark place = places.first;
     address.value = 'Address: ${place.locality}, ${place.country}';
   } catch (e) {
@@ -304,10 +303,7 @@ Future<bool> createHistory() async {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     "Authorization":
-    "Bearer ${Get
-        .find<AuthController>()
-        .authRepo
-        .getAuthToken()}"
+        "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
   };
   final body = jsonEncode({
     'request_id': requestId,
@@ -318,10 +314,7 @@ Future<bool> createHistory() async {
     'is_end': isEnd,
   });
   print(
-      'Get.find<AuthController>().authRepo.getAuthToken()======${Get
-          .find<AuthController>()
-          .authRepo
-          .getAuthToken()}');
+      'Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');
   print('body=${body}');
 
   try {
@@ -349,10 +342,16 @@ Future<bool> createHistory() async {
   }
 }
 
-
 void startBackgroundService() {
   const platform = MethodChannel('com.tarudDriver.app/background_service');
-  platform.invokeMethod('startService');
+  platform.invokeMethod('startService').then((value) {
+    // Handle success case
+    print('Background service started successfully');
+    print('value=========${value}');
+  }).catchError((e) {
+    // Handle error case
+    print('Error starting background service: $e');
+  });
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -366,26 +365,21 @@ class MyHttpOverrides extends HttpOverrides {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  startBackgroundService(); // Call the function to start the background service
   HttpOverrides.global = MyHttpOverrides();
-
   // Initialize Firebase
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp();
   }
-
   await getFCMToken();
   await initNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
   // Initialize and start the background service
   await initializeService();
-  startBackgroundService();
-
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
-
   runApp(const CargoDeleiveryApp());
 }
 
@@ -409,12 +403,6 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
     _setupInteractedMessage();
     WidgetsBinding.instance
         .addObserver(this); // Add observer for lifecycle changes
-    _startBackgroundService();
-  }
-
-  Future<void> _startBackgroundService() async {
-    const MethodChannel('your-app/background_service')
-        .invokeMethod('startService');
   }
 
   @override
@@ -511,15 +499,15 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
               _navigateToInitialRoute();
               SharedPreferences prefs = await SharedPreferences.getInstance();
               bool acceptOffer = prefs.getBool('acceptOffer') ?? false;
-              bool hasBidAndWaiting = prefs.getBool('hasBidAndWaiting') ?? false;
+              bool hasBidAndWaiting =
+                  prefs.getBool('hasBidAndWaiting') ?? false;
 
               if (acceptOffer || hasBidAndWaiting) {
                 Get.offAll(() =>
                     DriverRequestNotificationScreen(message: _initialMessage));
               } else {
                 if (_initialMessage == null) {
-                  Get.offAll(() =>
-                  Get.find<AuthController>().isLogedIn()
+                  Get.offAll(() => Get.find<AuthController>().isLogedIn()
                       ? const LocationPage()
                       : const WelcomeScreen());
                 }

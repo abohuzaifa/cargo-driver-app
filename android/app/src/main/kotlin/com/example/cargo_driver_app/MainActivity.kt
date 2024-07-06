@@ -1,27 +1,30 @@
-package com.tarudDriver.app
+// MainActivity.kt
+package com.example.cargo_driver_app// Make sure this matches your package name
 
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import com.tarudDriver.app.BackgroundService // Make sure to import your BackgroundService class
+import androidx.core.content.ContextCompat
+import android.content.Intent
+import com.example.cargo_driver_app.MyBackgroundService
 
 class MainActivity : FlutterActivity() {
-    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+    private val CHANNEL = "com.tarudDriver.app/background_service"
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.tarudDriver.app/background_service")
-            .setMethodCallHandler { call, result ->
-                if (call.method == "startService") {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(Intent(this, BackgroundService::class.java))
-                    } else {
-                        startService(Intent(this, BackgroundService::class.java))
-                    }
-                    result.success(null)
-                }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "startService") {
+                startBackgroundService()
+                result.success("Background service started")
+            } else {
+                result.notImplemented()
             }
+        }
+    }
+
+    private fun startBackgroundService() {
+        val intent = Intent(this, MyBackgroundService::class.java)
+        ContextCompat.startForegroundService(this, intent)
     }
 }
