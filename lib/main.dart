@@ -413,7 +413,7 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
   }
 
   Future<void> _startBackgroundService() async {
-    const MethodChannel('yourapp/background_service')
+    const MethodChannel('your-app/background_service')
         .invokeMethod('startService');
   }
 
@@ -511,8 +511,7 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
               _navigateToInitialRoute();
               SharedPreferences prefs = await SharedPreferences.getInstance();
               bool acceptOffer = prefs.getBool('acceptOffer') ?? false;
-              bool hasBidAndWaiting =
-                  prefs.getBool('hasBidAndWaiting') ?? false;
+              bool hasBidAndWaiting = prefs.getBool('hasBidAndWaiting') ?? false;
 
               if (acceptOffer || hasBidAndWaiting) {
                 Get.offAll(() =>

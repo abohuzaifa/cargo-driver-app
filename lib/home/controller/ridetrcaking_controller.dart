@@ -26,7 +26,10 @@ class RideTrackingController extends GetxController implements GetxService {
   RxBool isReceiverLocationReached = false.obs;
   late Timer _locationCheckTimer;
   late Timer _historyTimer;
-  var message;
+  RxString message = ''.obs;
+  RxBool paymentStatusDone = false.obs;
+  RxBool cashOnDelivery = false.obs; // Initialize the variable
+
   TextEditingController codeController = TextEditingController();
 
   LatLng parcelLocation = LatLng(31.4926, 74.3925); // Example parcel location
@@ -447,9 +450,61 @@ class RideTrackingController extends GetxController implements GetxService {
     return R * c;
   }
 
+  Future<void> updatePaymentStatus() async {
+    // Initialize SharedPreferences and AuthRepo
+    final SharedPreferences sharedPreferences =
+        await SharedPreferences.getInstance();
+    String? requestId = sharedPreferences.getString('request_id');
+    print('Retrieved request_id: $requestId');
+    isLoading.value = true;
+    final url = Uri.parse('http://delivershipment.com/api/paymentStatus');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      "Authorization":
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+    };
+    final body = jsonEncode({
+      'request_id': requestId,
+    });
+    print('body=${body}');
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        // Successfully markCompleteRequest
+        isLoading.value = false;
+        print('Successful to markCompleteRequest');
+        print('Response body: ${response.body}');
+        Map<String, dynamic> responseBody = json.decode(response.body);
+        // Access a specific field in the JSON map and store it in the message variable
+        if (responseBody.containsKey('msg')) {
+          message.value = responseBody['msg'];
+          if (message.value == 'Payent status update succesfully') {}
+          paymentStatusDone.value = true;
+          markCompleteRequest(code: codeController.text);
+        }
+      } else {
+        // Error markCompleteRequest
+        isLoading.value = false;
+
+        print('Failed to paymentStatus. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      // Exception handling
+      isLoading.value = false;
+
+      print('Exception caught: $e');
+    }
+  }
+
   Future<void> markCompleteRequest({
     required String code,
   }) async {
+    final SharedPreferences sharedPreferences =
+        await SharedPreferences.getInstance();
     isLoading.value = true;
     codeController.clear();
     final url = Uri.parse('http://delivershipment.com/api/markCompleteRequest');
@@ -473,11 +528,20 @@ class RideTrackingController extends GetxController implements GetxService {
         print('Successful to markCompleteRequest');
         print('Response body: ${response.body}');
         Map<String, dynamic> responseBody = json.decode(response.body);
-// Access a specific field in the JSON map and store it in the message variable
+        // Access a specific field in the JSON map and store it in the message variable
         if (responseBody.containsKey('msg')) {
-          message = responseBody['msg'];
+          message.value = responseBody['msg'];
+          if (message.value ==
+              'Did you received payment, If received then press YES Or NOT') {
+            cashOnDelivery.value = true; // Set the variable to true
+          }
+          if (message.value == 'Request status update successfully') {
+            sharedPreferences.setString('request_id', '');
+            sharedPreferences.setBool('acceptOffer', false);
+            sharedPreferences.setBool('hasBidAndWaiting', false);
+          }
         } else {
-          message = 'Key "msg" not found in the response';
+          message.value == 'Code Does not Match';
         }
       } else {
         // Error markCompleteRequest
@@ -493,6 +557,9 @@ class RideTrackingController extends GetxController implements GetxService {
 
       print('Exception caught: $e');
     }
+
+    print(
+        'cashOnDelivery: $cashOnDelivery'); // Debug print to check the variable's value
   }
 
   Future<void> createHistory({
