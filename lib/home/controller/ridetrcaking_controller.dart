@@ -565,6 +565,7 @@ class RideTrackingController extends GetxController implements GetxService {
   Future<void> createHistory({
     required String isStart,
     required String isEnd,
+    required String isProceed,
   }) async {
     final requestId = await getRequestId(); // Retrieve the request_id
     address.value = await getAddress(latitude.value, longitude.value);
@@ -583,6 +584,7 @@ class RideTrackingController extends GetxController implements GetxService {
       'address': address.value,
       'is_start': isStart,
       'is_end': isEnd,
+      'is_proceed': isProceed,
     });
     print('body=${body}');
 
@@ -594,7 +596,8 @@ class RideTrackingController extends GetxController implements GetxService {
         print('Successful to create history');
         print('Response body: ${response.body}');
         isRideStarted.value = true;
-        _startPeriodicHistoryUpdates();
+        update();
+        _startPeriodicHistoryUpdates(isProceed);
       } else {
         // Error creating history
         print('Failed to create history. Status code: ${response.statusCode}');
@@ -612,12 +615,12 @@ class RideTrackingController extends GetxController implements GetxService {
     return prefs.getString('request_id');
   }
 
-  void _startPeriodicHistoryUpdates() {
+  void _startPeriodicHistoryUpdates(String isProceed) {
     print('In _startPeriodicHistoryUpdates');
     const duration = Duration(minutes: 5); // Adjust the interval as needed
     _historyTimer = Timer.periodic(duration, (timer) {
       if (isRideStarted.value == true) {
-        createHistory(isStart: '1', isEnd: '0');
+        createHistory(isStart: '1', isEnd: '0', isProceed: isProceed);
         print('In _startPeriodicHistoryUpdates Ping done');
       } else {
         timer.cancel();

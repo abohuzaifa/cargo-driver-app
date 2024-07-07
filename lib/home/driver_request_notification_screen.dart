@@ -179,27 +179,31 @@ class _DriverRequestNotificationScreenState
             child: Scaffold(
               bottomSheet: Padding(
                   padding: const EdgeInsets.all(30.0),
-                  child: Obx(
-                    () => acceptOffer.value == true
-                        ? CustomButton(
-                            buttonText: "Proceed",
-                            onPress: () {
-                              controller.setParcelLocationToReceiver();
-                              // controller.createHistory(
-                              //     isStart: '1', isEnd: '0');
-                              // controller.startLocationCheckIfNearByHundredMeters();
-                              // Get.to(() => const BottomBarScreen());
-                            },
-                          )
-                        : Text(
-                            'Waiting for User to accept your Offer',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  )),
+                  child: controller.isRideStarted.value == true
+                      ? Container(child: Text('Ride Started'))
+                      : Obx(
+                          () => acceptOffer.value == true
+                              ? CustomButton(
+                                  buttonText: "Proceed",
+                                  onPress: () {
+                                    // controller.setParcelLocationToReceiver();
+                                    controller.createHistory(
+                                        isProceed: '1',
+                                        isStart: '1',
+                                        isEnd: '0');
+                                    // controller.startLocationCheckIfNearByHundredMeters();
+                                    // Get.to(() => const BottomBarScreen());
+                                  },
+                                )
+                              : Text(
+                                  'Waiting for User to accept your Offer',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        )),
               backgroundColor: Colors.transparent,
               body: Stack(
                 alignment: Alignment.center,
@@ -376,7 +380,9 @@ class _DriverRequestNotificationScreenState
                                         height: 50,
                                         width: 50,
                                       ),
-                                      SizedBox(height: 20,),
+                                      SizedBox(
+                                        height: 20,
+                                      ),
                                       ElevatedButton(
                                         onPressed: () {
                                           // Add your onPressed code here!
@@ -387,10 +393,10 @@ class _DriverRequestNotificationScreenState
                                           textAlign: TextAlign.center,
                                         ),
                                         style: ElevatedButton.styleFrom(
-                                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 12),
                                         ),
                                       )
-
                                     ],
                                   )
                                 : Center(

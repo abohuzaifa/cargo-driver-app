@@ -30,8 +30,15 @@ void setPreferences() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('isStart', '0');
   await prefs.setString('isEnd', '0');
-  print(
-      'Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
+  print('Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
+  print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
+}
+void setPreferencesForProceed() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('isProceed', '1');
+  await prefs.setString('isStart', '1');
+  await prefs.setString('isEnd', '0');
+  print('Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
   print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
 }
 
@@ -74,8 +81,8 @@ Future<void> initializeService() async {
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'my_foreground', // id
     'MY FOREGROUND SERVICE', // title
-    description:
-        'This channel is used for important notifications.', // description
+    description: 'This channel is used for important notifications.',
+    // description
     importance: Importance.low, // importance must be at low or higher level
   );
 
@@ -98,30 +105,89 @@ Future<void> initializeService() async {
 
   await service.configure(
     androidConfiguration: AndroidConfiguration(
-      // this will be executed when app is in foreground or background in separated isolate
+      // This will be executed when the app is in the foreground or background in a separated isolate
       onStart: onStart,
 
-      // auto start service
+      // Auto start service
       autoStart: true,
       isForegroundMode: true,
 
-      // notificationChannelId: 'my_foreground',
-      // initialNotificationTitle: 'AWESOME SERVICE',
-      // initialNotificationContent: 'Initializing',
-      // foregroundServiceNotificationId: 888,
+      // Uncomment these lines to customize the notification
+      notificationChannelId: 'my_foreground',
+      initialNotificationTitle: 'AWESOME SERVICE',
+      initialNotificationContent: 'Initializing',
+      foregroundServiceNotificationId: 888,
     ),
     iosConfiguration: IosConfiguration(
-      // auto start service
+      // Auto start service
       autoStart: true,
 
-      // this will be executed when app is in foreground in separated isolate
+      // This will be executed when the app is in the foreground in a separated isolate
       onForeground: onStart,
 
-      // you have to enable background fetch capability on xcode project
+      // You have to enable background fetch capability in the Xcode project
       onBackground: onIosBackground,
     ),
   );
+
+  service.startService();
 }
+
+// Future<void> initializeService() async {
+//   final service = FlutterBackgroundService();
+//
+//   /// OPTIONAL, using custom notification channel id
+//   const AndroidNotificationChannel channel = AndroidNotificationChannel(
+//     'my_foreground', // id
+//     'MY FOREGROUND SERVICE', // title
+//     description:
+//         'This channel is used for important notifications.', // description
+//     importance: Importance.low, // importance must be at low or higher level
+//   );
+//
+//   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//       FlutterLocalNotificationsPlugin();
+//
+//   if (Platform.isIOS || Platform.isAndroid) {
+//     await flutterLocalNotificationsPlugin.initialize(
+//       const InitializationSettings(
+//         iOS: DarwinInitializationSettings(),
+//         android: AndroidInitializationSettings('ic_bg_service_small'),
+//       ),
+//     );
+//   }
+//
+//   await flutterLocalNotificationsPlugin
+//       .resolvePlatformSpecificImplementation<
+//           AndroidFlutterLocalNotificationsPlugin>()
+//       ?.createNotificationChannel(channel);
+//
+//   await service.configure(
+//     androidConfiguration: AndroidConfiguration(
+//       // this will be executed when app is in foreground or background in separated isolate
+//       onStart: onStart,
+//
+//       // auto start service
+//       autoStart: true,
+//       isForegroundMode: true,
+//
+//       // notificationChannelId: 'my_foreground',
+//       // initialNotificationTitle: 'AWESOME SERVICE',
+//       // initialNotificationContent: 'Initializing',
+//       // foregroundServiceNotificationId: 888,
+//     ),
+//     iosConfiguration: IosConfiguration(
+//       // auto start service
+//       autoStart: true,
+//
+//       // this will be executed when app is in foreground in separated isolate
+//       onForeground: onStart,
+//
+//       // you have to enable background fetch capability on xcode project
+//       onBackground: onIosBackground,
+//     ),
+//   );
+// }
 
 // to ensure this is executed
 // run app from xcode, then from xcode menu, select Simulate Background Fetch
@@ -166,26 +232,26 @@ void onStart(ServiceInstance service) async {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // if (service is AndroidServiceInstance) {
-  //   // Set the service as a foreground service and display the initial notification
-  //   service.setAsForegroundService();
-  //   service.setForegroundNotificationInfo(
-  //     title: "My App Service",
-  //     content: "Fetching location periodically",
-  //   );
-  //
-  //   service.on('setAsForeground').listen((event) {
-  //     service.setAsForegroundService();
-  //   });
-  //
-  //   service.on('setAsBackground').listen((event) {
-  //     service.setAsBackgroundService();
-  //   });
-  // }
-  //
-  // service.on('stopService').listen((event) {
-  //   service.stopSelf();
-  // });
+  if (service is AndroidServiceInstance) {
+    // Set the service as a foreground service and display the initial notification
+    service.setAsForegroundService();
+    service.setForegroundNotificationInfo(
+      title: "My App Service",
+      content: "Fetching location periodically",
+    );
+
+    service.on('setAsForeground').listen((event) {
+      service.setAsForegroundService();
+    });
+
+    service.on('setAsBackground').listen((event) {
+      service.setAsBackgroundService();
+    });
+  }
+
+  service.on('stopService').listen((event) {
+    service.stopSelf();
+  });
 
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     print('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
@@ -201,6 +267,7 @@ void onStart(ServiceInstance service) async {
     sharedPreferences.reload(); // Ensure you reload the preferences
     String? isStart = sharedPreferences.getString('isStart');
     String? isEnd = sharedPreferences.getString('isEnd');
+    String? isProceed = sharedPreferences.getString('isEnd');
     print('Background: Retrieved isStart: $isStart, isEnd: $isEnd');
 
     try {
@@ -209,7 +276,7 @@ void onStart(ServiceInstance service) async {
           desiredAccuracy: LocationAccuracy.high);
       print(
           'Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
-      await createHistory();
+      await createHistory(isStart: isStart!,isEnd: isEnd!);
     } catch (e) {
       print('Error obtaining position: $e');
       return;
@@ -290,14 +357,11 @@ Future<String?> getRequestId() async {
   return prefs.getString('request_id');
 }
 
-Future<bool> createHistory() async {
+Future<bool> createHistory({required String isStart,required String isEnd}) async {
 // Retrieve the request_id
   address.value = await getAddress(position!.latitude, position!.longitude);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? requestId = prefs.getString('request_id');
-  String? isStart = prefs.getString('isStart');
-  String? isEnd = prefs.getString('isEnd');
-
   final url = Uri.parse('http://delivershipment.com/api/createHistory');
   final headers = {
     'Content-Type': 'application/json',
@@ -312,6 +376,7 @@ Future<bool> createHistory() async {
     'address': address.value,
     'is_start': isStart,
     'is_end': isEnd,
+    'is_Proceed': '',
   });
   print(
       'Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');
@@ -365,7 +430,6 @@ class MyHttpOverrides extends HttpOverrides {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  startBackgroundService(); // Call the function to start the background service
   HttpOverrides.global = MyHttpOverrides();
   // Initialize Firebase
   if (Firebase.apps.isEmpty) {
@@ -375,11 +439,12 @@ void main() async {
   await initNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   // Initialize and start the background service
-  await initializeService();
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
+  await initializeService();
+
   runApp(const CargoDeleiveryApp());
 }
 
@@ -412,14 +477,14 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
     super.dispose();
   }
 
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      FlutterBackgroundService().startService();
-    } else if (state == AppLifecycleState.resumed) {
-      FlutterBackgroundService().invoke('stopService');
-      printStoredLogs();
-    }
-  }
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //   if (state == AppLifecycleState.paused) {
+  //     FlutterBackgroundService().startService();
+  //   } else if (state == AppLifecycleState.resumed) {
+  //     FlutterBackgroundService().invoke('stopService');
+  //     printStoredLogs();
+  //   }
+  // }
 
   Future<void> printStoredLogs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
