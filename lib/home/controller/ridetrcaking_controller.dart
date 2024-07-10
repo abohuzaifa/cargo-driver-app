@@ -452,6 +452,8 @@ class RideTrackingController extends GetxController implements GetxService {
 
   Future<void> updatePaymentStatus() async {
     // Initialize SharedPreferences and AuthRepo
+    print(
+        'Get.find<AuthController>().authRepo.getAuthToken()====${Get.find<AuthController>().authRepo.getAuthToken()}');
     final SharedPreferences sharedPreferences =
         await SharedPreferences.getInstance();
     String? requestId = sharedPreferences.getString('request_id');
@@ -476,14 +478,16 @@ class RideTrackingController extends GetxController implements GetxService {
         // Successfully markCompleteRequest
         isLoading.value = false;
         print('Successful to markCompleteRequest');
+        paymentStatusDone.value = true;
+        update();
         print('Response body: ${response.body}');
         Map<String, dynamic> responseBody = json.decode(response.body);
         // Access a specific field in the JSON map and store it in the message variable
         if (responseBody.containsKey('msg')) {
           message.value = responseBody['msg'];
+          print('message.value=====${message.value}');
           if (message.value == 'Payent status update succesfully') {}
           paymentStatusDone.value = true;
-          markCompleteRequest(code: codeController.text);
         }
       } else {
         // Error markCompleteRequest

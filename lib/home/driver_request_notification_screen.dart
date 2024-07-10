@@ -186,11 +186,11 @@ class _DriverRequestNotificationScreenState
                               ? CustomButton(
                                   buttonText: "Proceed",
                                   onPress: () {
-                                    // controller.setParcelLocationToReceiver();
-                                    controller.createHistory(
-                                        isProceed: '1',
-                                        isStart: '1',
-                                        isEnd: '0');
+                                    controller.setParcelLocationToReceiver();
+                                    // controller.createHistory(
+                                    //     isProceed: '1',
+                                    //     isStart: '1',
+                                    //     isEnd: '0');
                                     // controller.startLocationCheckIfNearByHundredMeters();
                                     // Get.to(() => const BottomBarScreen());
                                   },
@@ -386,7 +386,7 @@ class _DriverRequestNotificationScreenState
                                       ElevatedButton(
                                         onPressed: () {
                                           // Add your onPressed code here!
-                                          Get.offAll(BottomBarScreen());
+                                          Get.offAll(const BottomBarScreen());
                                         },
                                         child: const Text(
                                           'Back to Home',
@@ -399,177 +399,232 @@ class _DriverRequestNotificationScreenState
                                       )
                                     ],
                                   )
-                                : Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          height: 20,
-                                        ),
-                                        Container(
-                                          margin: EdgeInsets.only(left: 20),
-                                          child: Text(
-                                            'Have you reached the destination?',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
+                                : controller.paymentStatusDone.value == true
+                                    ? Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Center(
+                                            child: const Text(
+                                              'Request Status Successfully Updated',
+                                              style: TextStyle(fontSize: 20),
+                                              textAlign: TextAlign
+                                                  .center, // Align text to the center
                                             ),
-                                            textAlign: TextAlign.center,
                                           ),
-                                        ),
-                                        SizedBox(height: 20),
-                                        Column(
-                                          children: [
-                                            Container(
-                                              margin: EdgeInsets.only(
-                                                  left: 20, right: 20),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Expanded(
-                                                    child: SizedBox(
-                                                      height:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              0.06,
-                                                      child: ElevatedButton(
-                                                        onPressed: () async {
-                                                          // Handle yes action
-                                                          if (controller
-                                                              .codeController
-                                                              .text
-                                                              .isEmpty) {
-                                                            Get.snackbar(
-                                                                'Alert',
-                                                                'Please Enter Code',
-                                                                backgroundColor:
-                                                                    Colors.red);
-                                                          } else {
-                                                            controller.message
-                                                                .value = '';
-
-                                                            await controller
-                                                                .markCompleteRequest(
-                                                                    code: controller
-                                                                        .codeController
-                                                                        .text);
-                                                          }
-                                                        },
-                                                        style: ElevatedButton
-                                                            .styleFrom(
-                                                          backgroundColor:
-                                                              Colors.grey,
-                                                        ),
-                                                        child: Text('Yes',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white)),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.05),
-                                                  Expanded(
-                                                    child: SizedBox(
-                                                      height:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              0.06,
-                                                      child: ElevatedButton(
-                                                        onPressed: () {
-                                                          // Handle reject action
-                                                        },
-                                                        style: ElevatedButton
-                                                            .styleFrom(
-                                                          backgroundColor:
-                                                              Colors.blueGrey,
-                                                        ),
-                                                        child: Text(
-                                                          'No',
-                                                          style: TextStyle(
-                                                              color:
-                                                                  Colors.white),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          Image.asset(
+                                            'assets/images/checkMark.png',
+                                            height: 50,
+                                            width: 50,
+                                          ),
+                                          SizedBox(
+                                            height: 20,
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              // Add your onPressed code here!
+                                              Get.offAll(BottomBarScreen());
+                                            },
+                                            child: const Text(
+                                              'Back to Home',
+                                              textAlign: TextAlign.center,
                                             ),
+                                            style: ElevatedButton.styleFrom(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 24, vertical: 12),
+                                            ),
+                                          )
+                                        ],
+                                      )
+                                    : Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
                                             SizedBox(
                                               height: 20,
                                             ),
                                             Container(
                                               margin: EdgeInsets.only(left: 20),
                                               child: Text(
-                                                'Enter Code',
+                                                'Have you reached the destination?',
                                                 style: TextStyle(
                                                   fontSize: 20,
                                                   fontWeight: FontWeight.bold,
                                                 ),
+                                                textAlign: TextAlign.center,
                                               ),
                                             ),
-                                            SizedBox(
-                                              height: 20,
-                                            ),
-                                            controller.isLoading.value == true
-                                                ? Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                      color: Colors.blueGrey,
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    height: 100,
-                                                    width: 200,
-                                                    child: TextField(
-                                                      controller: controller
-                                                          .codeController,
-                                                      decoration:
-                                                          InputDecoration(
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        contentPadding:
-                                                            EdgeInsets.all(10),
+                                            SizedBox(height: 20),
+                                            Column(
+                                              children: [
+                                                Container(
+                                                  margin: EdgeInsets.only(
+                                                      left: 20, right: 20),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Expanded(
+                                                        child: SizedBox(
+                                                          height: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .height *
+                                                              0.06,
+                                                          child: ElevatedButton(
+                                                            onPressed:
+                                                                () async {
+                                                              // Handle yes action
+                                                              if (controller
+                                                                  .codeController
+                                                                  .text
+                                                                  .isEmpty) {
+                                                                Get.snackbar(
+                                                                    'Alert',
+                                                                    'Please Enter Code',
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .red);
+                                                              } else {
+                                                                controller
+                                                                    .message
+                                                                    .value = '';
+
+                                                                await controller
+                                                                    .markCompleteRequest(
+                                                                        code: controller
+                                                                            .codeController
+                                                                            .text);
+                                                              }
+                                                            },
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.grey,
+                                                            ),
+                                                            child: Text('Yes',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white)),
+                                                          ),
+                                                        ),
                                                       ),
-                                                      maxLines: 1,
-                                                      // Allow multiple lines if needed
-                                                      textInputAction:
-                                                          TextInputAction.done,
-                                                      // Show the done button
-                                                      onSubmitted:
-                                                          (String value) {
-                                                        // Close the keyboard when text input is complete
-                                                        FocusScope.of(context)
-                                                            .unfocus();
-                                                      },
+                                                      SizedBox(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.05),
+                                                      Expanded(
+                                                        child: SizedBox(
+                                                          height: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .height *
+                                                              0.06,
+                                                          child: ElevatedButton(
+                                                            onPressed: () {
+                                                              // Handle reject action
+                                                            },
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  Colors
+                                                                      .blueGrey,
+                                                            ),
+                                                            child: Text(
+                                                              'No',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  height: 20,
+                                                ),
+                                                Container(
+                                                  margin:
+                                                      EdgeInsets.only(left: 20),
+                                                  child: Text(
+                                                    'Enter Code',
+                                                    style: TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
-                                            controller.message.value ==
-                                                    'Code does not match'
-                                                ? Container(
-                                                    margin: EdgeInsets.only(
-                                                        bottom: 20),
-                                                    child: Text(
-                                                      controller.message.value,
-                                                      style: TextStyle(
-                                                          color: Colors.red,
-                                                          fontSize: 15),
-                                                    ),
-                                                  )
-                                                : Container()
+                                                ),
+                                                SizedBox(
+                                                  height: 20,
+                                                ),
+                                                controller.isLoading.value ==
+                                                        true
+                                                    ? Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                          color:
+                                                              Colors.blueGrey,
+                                                        ),
+                                                      )
+                                                    : Container(
+                                                        height: 100,
+                                                        width: 200,
+                                                        child: TextField(
+                                                          controller: controller
+                                                              .codeController,
+                                                          decoration:
+                                                              InputDecoration(
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                            contentPadding:
+                                                                EdgeInsets.all(
+                                                                    10),
+                                                          ),
+                                                          maxLines: 1,
+                                                          // Allow multiple lines if needed
+                                                          textInputAction:
+                                                              TextInputAction
+                                                                  .done,
+                                                          // Show the done button
+                                                          onSubmitted:
+                                                              (String value) {
+                                                            // Close the keyboard when text input is complete
+                                                            FocusScope.of(
+                                                                    context)
+                                                                .unfocus();
+                                                          },
+                                                        ),
+                                                      ),
+                                                controller.message.value ==
+                                                        'Code does not match'
+                                                    ? Container(
+                                                        margin: EdgeInsets.only(
+                                                            bottom: 20),
+                                                        child: Text(
+                                                          controller
+                                                              .message.value,
+                                                          style: TextStyle(
+                                                              color: Colors.red,
+                                                              fontSize: 15),
+                                                        ),
+                                                      )
+                                                    : Container()
+                                              ],
+                                            ),
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
+                                      ),
                           )
                         : Container(),
                   ),
