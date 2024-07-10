@@ -66,6 +66,8 @@ class RideTrackingController extends GetxController implements GetxService {
     super.onInit();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     isOfferAccepted.value = prefs.getBool('acceptOffer') ?? false;
+    print('paymentStatusDone.value=======${paymentStatusDone.value}');
+    print('message.value=======${message.value}');
     init();
     // initClient();
   }
@@ -477,17 +479,21 @@ class RideTrackingController extends GetxController implements GetxService {
       if (response.statusCode == 200) {
         // Successfully markCompleteRequest
         isLoading.value = false;
-        print('Successful to markCompleteRequest');
-        paymentStatusDone.value = true;
-        update();
+        print('Successful to updatePaymentStatus');
         print('Response body: ${response.body}');
         Map<String, dynamic> responseBody = json.decode(response.body);
         // Access a specific field in the JSON map and store it in the message variable
+        print('response.body==${response.body}');
+
         if (responseBody.containsKey('msg')) {
           message.value = responseBody['msg'];
           print('message.value=====${message.value}');
-          if (message.value == 'Payent status update succesfully') {}
-          paymentStatusDone.value = true;
+          if (message.value == 'Request status update successfully') {
+            paymentStatusDone.value = true;
+            sharedPreferences.setString('request_id', '');
+            sharedPreferences.setBool('acceptOffer', false);
+            sharedPreferences.setBool('hasBidAndWaiting', false);
+          }
         }
       } else {
         // Error markCompleteRequest
