@@ -46,6 +46,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
   final amonutController = TextEditingController();
 
   Future<void> getRequestData(RemoteMessage? message) async {
+    _isLoading = true;
     print('message====${message!.data}');
     // Extract the request_id from the message data
     var requestId = message.data['request_id'];
@@ -67,36 +68,44 @@ class _FindTripOnlineState extends State<FindTripOnline> {
 
       if (response.statusCode == 200) {
         // API call was successful
+        _isLoading = false;
+
         print('API call successful');
         final jsonResponse = json.decode(response.body);
 
-        setState(() async {
-          mdGetRequestData = MDGetRequestData.fromJson(jsonResponse);
-          String createdAt = mdGetRequestData!.requestData!.createdAt!;
-          DateTime parsedDate = DateTime.parse(createdAt);
-          formattedDate = DateFormat('yyyy-MM-dd')
-              .format(parsedDate); // Format to only show the date part
-          SharedPreferences prefs = await SharedPreferences.getInstance();
+        mdGetRequestData = MDGetRequestData.fromJson(jsonResponse);
+        String createdAt = mdGetRequestData!.requestData!.createdAt!;
+        DateTime parsedDate = DateTime.parse(createdAt);
+        formattedDate = DateFormat('yyyy-MM-dd')
+            .format(parsedDate); // Format to only show the date part
+        SharedPreferences prefs = await SharedPreferences.getInstance();
 
-          await prefs.setString(
-              'parcel_lat', mdGetRequestData!.requestData!.parcelLat!);
-          await prefs.setString(
-              'parcel_long', mdGetRequestData!.requestData!.parcelLong!);
-          await prefs.setString(
-              'receiver_lat', mdGetRequestData!.requestData!.receiverLat!);
-          await prefs.setString(
-              'receiver_long', mdGetRequestData!.requestData!.receiverLong!);
-        });
-        print('mdGetRequestData======${mdGetRequestData}');
+        await prefs.setString(
+            'parcel_lat', mdGetRequestData!.requestData!.parcelLat!);
+        await prefs.setString(
+            'parcel_long', mdGetRequestData!.requestData!.parcelLong!);
+        await prefs.setString(
+            'receiver_lat', mdGetRequestData!.requestData!.receiverLat!);
+        await prefs.setString(
+            'receiver_long', mdGetRequestData!.requestData!.receiverLong!);
+        print(
+            'mdGetRequestData!.requestData!.receiverAddress======${mdGetRequestData!.requestData!.receiverAddress}');
+        print(
+            'mdGetRequestData!.requestData!.receiverAddress======${mdGetRequestData!.requestData!.parcelAddress}');
       } else {
         // API call failed
+        _isLoading = false;
+
         print('API call failed with status: ${response.statusCode}');
       }
     } catch (e) {
       // Handle error
+      _isLoading = false;
+
       print('API call error: $e');
     }
   }
+
   Future<void> declineOffer(RemoteMessage? message) async {
     print('message====${message!.data}');
 
@@ -109,7 +118,8 @@ class _FindTripOnlineState extends State<FindTripOnline> {
 
     // Prepare headers and body
     final headers = {
-      "Authorization": "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+      "Authorization":
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
     };
     final body = ({'offer_id': requestId});
 
@@ -283,289 +293,256 @@ class _FindTripOnlineState extends State<FindTripOnline> {
                                             requestAccepted.value = true;
                                           });
                                           await getRequestData(widget.message);
-                                          showBottomSheet(
-                                            context: context,
-                                            builder: (_) =>
-                                                // Extract and format createdAt field
+                                          _isLoading == true
+                                              ? Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                )
+                                              : showBottomSheet(
+                                                  context: context,
+                                                  builder: (_) =>
+                                                      // Extract and format createdAt field
 
-                                                Wrap(
-                                              children: [
-                                                Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Container(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              top: 8,
-                                                              bottom: 8),
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                              top: 8,
-                                                              bottom: 8),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: Colors.grey
-                                                                .withOpacity(
-                                                                    0.4),
-                                                            blurRadius: 10,
-                                                            spreadRadius: 0,
-                                                            offset:
-                                                                const Offset(
-                                                                    0.0, 0.0),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8),
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Row(
-                                                                  children: [
-                                                                    const Icon(
-                                                                        Icons
-                                                                            .calendar_month,
-                                                                        color: Colors
-                                                                            .black,
-                                                                        size:
-                                                                            16),
-                                                                    const SizedBox(
-                                                                        width:
-                                                                            8),
-                                                                    Padding(
-                                                                      padding: const EdgeInsets
-                                                                          .only(
-                                                                          top:
-                                                                              2),
-                                                                      child: Text(
-                                                                          formattedDate!,
-                                                                          style:
-                                                                              const TextStyle(fontSize: 14)),
-                                                                    ),
-                                                                  ],
+                                                      Wrap(
+                                                    children: [
+                                                      Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 8,
+                                                                    bottom: 8),
+                                                            margin:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 8,
+                                                                    bottom: 8),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.white,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                              boxShadow: [
+                                                                BoxShadow(
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .withOpacity(
+                                                                          0.4),
+                                                                  blurRadius:
+                                                                      10,
+                                                                  spreadRadius:
+                                                                      0,
+                                                                  offset:
+                                                                      const Offset(
+                                                                          0.0,
+                                                                          0.0),
                                                                 ),
-                                                                Text(
-                                                                    'Ride # ${mdGetRequestData!.requestData!.id}',
-                                                                    style: const TextStyle(
-                                                                        fontSize:
-                                                                            14)),
                                                               ],
                                                             ),
-                                                            const Divider(
-                                                                height: 24,
-                                                                thickness: 0.5),
-                                                            Row(
-                                                              children: [
-                                                                const Column(
-                                                                  children: [
-                                                                    Icon(
-                                                                        Icons
-                                                                            .near_me,
-                                                                        color: Colors
-                                                                            .green,
-                                                                        size:
-                                                                            18),
-                                                                    SizedBox(
-                                                                        height:
-                                                                            2),
-                                                                    SizedBox(
-                                                                      height:
-                                                                          34,
-                                                                      child:
-                                                                          DottedLine(
-                                                                        direction:
-                                                                            Axis.vertical,
-                                                                        lineLength:
-                                                                            double.infinity,
-                                                                        lineThickness:
-                                                                            1,
-                                                                        dashLength:
-                                                                            2,
-                                                                        dashColor:
-                                                                            Colors.black,
-                                                                      ),
-                                                                    ),
-                                                                    SizedBox(
-                                                                        height:
-                                                                            2),
-                                                                    Icon(
-                                                                        Icons
-                                                                            .location_on,
-                                                                        color: Colors
-                                                                            .red,
-                                                                        size:
-                                                                            18),
-                                                                  ],
-                                                                ),
-                                                                const SizedBox(
-                                                                    width: 16),
-                                                                Expanded(
-                                                                  child: Column(
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
+                                                            child: Container(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8),
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceBetween,
                                                                     children: [
-                                                                      const SizedBox(
-                                                                          height:
-                                                                              2),
-                                                                      Text(
-                                                                          '${mdGetRequestData!.requestData!.parcelAddress}' ??
-                                                                              '',
-                                                                          style: const TextStyle(
-                                                                              fontSize:
-                                                                                  14),
-                                                                          maxLines:
-                                                                              2),
-                                                                      const SizedBox(
-                                                                          height:
-                                                                              22),
-                                                                      Text(
-                                                                          '${mdGetRequestData!.requestData!.receiverAddress}' ??
-                                                                              '',
-                                                                          style: const TextStyle(
-                                                                              fontSize:
-                                                                                  14),
-                                                                          maxLines:
-                                                                              2),
                                                                       Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
                                                                         children: [
-                                                                          const Text(
-                                                                            'Price',
-                                                                            style:
-                                                                                TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                                                          ),
-                                                                          const Spacer(),
-                                                                          Flexible(
+                                                                          const Icon(
+                                                                              Icons.calendar_month,
+                                                                              color: Colors.black,
+                                                                              size: 16),
+                                                                          const SizedBox(
+                                                                              width: 8),
+                                                                          Padding(
+                                                                            padding:
+                                                                                const EdgeInsets.only(top: 2),
                                                                             child:
-                                                                                TextFormField(
-                                                                              decoration: const InputDecoration(
-                                                                                counterText: '',
-                                                                                contentPadding: EdgeInsets.all(1),
-                                                                                constraints: BoxConstraints(),
-                                                                                enabledBorder: OutlineInputBorder(
-                                                                                    borderRadius: BorderRadius.only(
-                                                                                      topRight: Radius.circular(13),
-                                                                                      bottomRight: Radius.circular(13),
-                                                                                    ),
-                                                                                    borderSide: BorderSide.none),
-                                                                                focusedBorder: OutlineInputBorder(
-                                                                                    borderRadius: BorderRadius.only(
-                                                                                      topRight: Radius.circular(13),
-                                                                                      bottomRight: Radius.circular(13),
-                                                                                    ),
-                                                                                    borderSide: BorderSide.none),
-                                                                                errorBorder: OutlineInputBorder(
-                                                                                    borderRadius: BorderRadius.only(
-                                                                                      topRight: Radius.circular(13),
-                                                                                      bottomRight: Radius.circular(13),
-                                                                                    ),
-                                                                                    borderSide: BorderSide.none),
-                                                                                disabledBorder: OutlineInputBorder(
-                                                                                    borderRadius: BorderRadius.only(
-                                                                                      topRight: Radius.circular(13),
-                                                                                      bottomRight: Radius.circular(13),
-                                                                                    ),
-                                                                                    borderSide: BorderSide.none),
-                                                                                filled: true,
-                                                                                fillColor: Colors.white,
-                                                                                border: InputBorder.none,
-                                                                                hintText: "123456789",
-                                                                                errorStyle: TextStyle(height: 0.05),
-                                                                                hintStyle: TextStyle(fontSize: 16, color: Colors.grey),
-                                                                              ),
-                                                                              controller: amonutController,
-                                                                              onChanged: (value) {
-                                                                                print(value);
-                                                                              },
-                                                                            ),
+                                                                                Text(formattedDate!, style: const TextStyle(fontSize: 14)),
                                                                           ),
                                                                         ],
-                                                                      )
+                                                                      ),
+                                                                      Text(
+                                                                          'Ride # ${mdGetRequestData!.requestData!.id}',
+                                                                          style:
+                                                                              const TextStyle(fontSize: 14)),
                                                                     ],
                                                                   ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                CustomButton(
-                                                                    width: 180,
-                                                                    buttonText:
-                                                                        'Cancel',
-                                                                    onPress:
-                                                                        () {
-                                                                      Get.back();
-                                                                    }),
-                                                                CustomButton(
-                                                                    width: 180,
-                                                                    buttonText:
-                                                                        'Bid Your Price',
-                                                                    onPress:
-                                                                        () async {
-                                                                      if (amonutController
-                                                                          .text
-                                                                          .isEmpty) {
-                                                                        Get.snackbar(
-                                                                            'Alert',
-                                                                            'Please Enter Bidding Amount',
-                                                                            backgroundColor:
-                                                                                Colors.red);
-                                                                      } else {
-                                                                        SharedPreferences
-                                                                            prefs =
-                                                                            await SharedPreferences.getInstance();
-                                                                        prefs.setBool(
-                                                                            'hasBidAndWaiting',
-                                                                            true);
+                                                                  const Divider(
+                                                                      height:
+                                                                          24,
+                                                                      thickness:
+                                                                          0.5),
+                                                                  Row(
+                                                                    children: [
+                                                                      const Column(
+                                                                        children: [
+                                                                          Icon(
+                                                                              Icons.near_me,
+                                                                              color: Colors.green,
+                                                                              size: 18),
+                                                                          SizedBox(
+                                                                              height: 2),
+                                                                          SizedBox(
+                                                                            height:
+                                                                                34,
+                                                                            child:
+                                                                                DottedLine(
+                                                                              direction: Axis.vertical,
+                                                                              lineLength: double.infinity,
+                                                                              lineThickness: 1,
+                                                                              dashLength: 2,
+                                                                              dashColor: Colors.black,
+                                                                            ),
+                                                                          ),
+                                                                          SizedBox(
+                                                                              height: 2),
+                                                                          Icon(
+                                                                              Icons.location_on,
+                                                                              color: Colors.red,
+                                                                              size: 18),
+                                                                        ],
+                                                                      ),
+                                                                      const SizedBox(
+                                                                          width:
+                                                                              16),
+                                                                      Expanded(
+                                                                        child:
+                                                                            Column(
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children: [
+                                                                            const SizedBox(height: 2),
+                                                                            Text('${mdGetRequestData!.requestData!.parcelAddress}' ?? '',
+                                                                                style: const TextStyle(fontSize: 14),
+                                                                                maxLines: 2),
+                                                                            const SizedBox(height: 22),
+                                                                            Text('${mdGetRequestData!.requestData!.receiverAddress}' ?? '',
+                                                                                style: const TextStyle(fontSize: 14),
+                                                                                maxLines: 2),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                const Text(
+                                                                                  'Price',
+                                                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                                                                ),
+                                                                                const Spacer(),
+                                                                                Flexible(
+                                                                                  child: TextFormField(
+                                                                                    decoration: const InputDecoration(
+                                                                                      counterText: '',
+                                                                                      contentPadding: EdgeInsets.all(1),
+                                                                                      constraints: BoxConstraints(),
+                                                                                      enabledBorder: OutlineInputBorder(
+                                                                                          borderRadius: BorderRadius.only(
+                                                                                            topRight: Radius.circular(13),
+                                                                                            bottomRight: Radius.circular(13),
+                                                                                          ),
+                                                                                          borderSide: BorderSide.none),
+                                                                                      focusedBorder: OutlineInputBorder(
+                                                                                          borderRadius: BorderRadius.only(
+                                                                                            topRight: Radius.circular(13),
+                                                                                            bottomRight: Radius.circular(13),
+                                                                                          ),
+                                                                                          borderSide: BorderSide.none),
+                                                                                      errorBorder: OutlineInputBorder(
+                                                                                          borderRadius: BorderRadius.only(
+                                                                                            topRight: Radius.circular(13),
+                                                                                            bottomRight: Radius.circular(13),
+                                                                                          ),
+                                                                                          borderSide: BorderSide.none),
+                                                                                      disabledBorder: OutlineInputBorder(
+                                                                                          borderRadius: BorderRadius.only(
+                                                                                            topRight: Radius.circular(13),
+                                                                                            bottomRight: Radius.circular(13),
+                                                                                          ),
+                                                                                          borderSide: BorderSide.none),
+                                                                                      filled: true,
+                                                                                      fillColor: Colors.white,
+                                                                                      border: InputBorder.none,
+                                                                                      hintText: "123456789",
+                                                                                      errorStyle: TextStyle(height: 0.05),
+                                                                                      hintStyle: TextStyle(fontSize: 16, color: Colors.grey),
+                                                                                    ),
+                                                                                    controller: amonutController,
+                                                                                    onChanged: (value) {
+                                                                                      print(value);
+                                                                                    },
+                                                                                  ),
+                                                                                ),
+                                                                              ],
+                                                                            )
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  Row(
+                                                                    mainAxisAlignment:
+                                                                        MainAxisAlignment
+                                                                            .spaceBetween,
+                                                                    children: [
+                                                                      CustomButton(
+                                                                          width:
+                                                                              180,
+                                                                          buttonText:
+                                                                              'Cancel',
+                                                                          onPress:
+                                                                              () {
+                                                                            Get.back();
+                                                                          }),
+                                                                      CustomButton(
+                                                                          width:
+                                                                              180,
+                                                                          buttonText:
+                                                                              'Bid Your Price',
+                                                                          onPress:
+                                                                              () async {
+                                                                            if (amonutController.text.isEmpty) {
+                                                                              Get.snackbar('Alert', 'Please Enter Bidding Amount', backgroundColor: Colors.red);
+                                                                            } else {
+                                                                              SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                                              prefs.setBool('hasBidAndWaiting', true);
 
-                                                                        print(
-                                                                            'amountController.text=${amonutController.text}');
-                                                                        print(
-                                                                            'widget.message!.data[request_id]=${widget.message!.data['request_id']}');
-                                                                        await Get.find<RideTrackingController>()
-                                                                            .bidOnUserRequests(
-                                                                          requestId:
-                                                                              '${widget.message!.data['request_id']}',
-                                                                          amount:
-                                                                              amonutController.text ?? '',
-                                                                        );
-                                                                      }
-                                                                    })
-                                                              ],
-                                                            )
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          );
+                                                                              print('amountController.text=${amonutController.text}');
+                                                                              print('widget.message!.data[request_id]=${widget.message!.data['request_id']}');
+                                                                              await Get.find<RideTrackingController>().bidOnUserRequests(
+                                                                                requestId: '${widget.message!.data['request_id']}',
+                                                                                amount: amonutController.text ?? '',
+                                                                              );
+                                                                            }
+                                                                          })
+                                                                    ],
+                                                                  )
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                );
                                         },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors
@@ -913,5 +890,3 @@ Widget newRequest(List<TripData> data, ScrollController scrollController) {
           ),
   );
 }
-
-

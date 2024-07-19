@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:cargo_driver_app/models/current_ride_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -33,7 +35,8 @@ class DriverRequestNotificationScreen extends StatefulWidget {
 
 class _DriverRequestNotificationScreenState
     extends State<DriverRequestNotificationScreen> {
-  RideTrackingController? controller;
+  RideTrackingController controller =
+      RideTrackingController(userRepo: UserRepo());
   final StreamController<RemoteMessage?> _messageStreamController =
       StreamController<RemoteMessage?>();
   late GoogleMapController mapController;
@@ -46,12 +49,22 @@ class _DriverRequestNotificationScreenState
   Set<Circle> _circles = {};
   Position? _currentPosition;
   RxBool acceptOffer = false.obs;
+  RxBool parcelReceived = false.obs;
+  RxBool isRideStarted = false.obs;
+  var parcelLat;
+  var parcelLong;
+  var receiverLat;
+  var receiverLong;
+  Position? currentPosition; // Variable to store the latest position
+  late Timer _locationTimer;
+  RxBool isInternetConnected = false.obs;
 
   @override
   void initState() {
     super.initState();
     controller = Get.put(RideTrackingController(userRepo: UserRepo()));
     _initializeState();
+    _startLocationUpdates();
   }
 
   Future<void> _initializeState() async {
@@ -60,82 +73,125 @@ class _DriverRequestNotificationScreenState
   }
 
   Future<void> _getCurrentLocation() async {
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    acceptOffer.value = prefs.getBool('acceptOffer') ?? false;
+    print(
+        'controller!.isReceiverLocationReached.value ======${controller.isReceiverLocationReached.value}');
+    if (controller.isReceiverLocationReached.value == false) {
+      if (!mounted) return; // Check if the widget is still mounted
 
-    var parcelLat = prefs.getString('parcel_lat');
-    var parcelLong = prefs.getString('parcel_long');
-    var receiverLat = prefs.getString('receiver_lat');
-    var receiverLong = prefs.getString('receiver_long');
+      // Check internet connectivity
+      List<ConnectivityResult> connectivityResults =
+          await Connectivity().checkConnectivity();
+      print('Connectivity Results: $connectivityResults'); // Debug print
 
-    print('Parcel Latitude: $parcelLat');
-    print('Parcel Longitude: $parcelLong');
-    print('Receiver Latitude: $receiverLat');
-    print('Receiver Longitude: $receiverLong');
-    double? parcelLat1 = double.tryParse(parcelLat ?? '');
-    double? parcelLong1 = double.tryParse(parcelLong ?? '');
-    double? receiverLat1 = double.tryParse(receiverLat ?? '');
-    double? receiverLong1 = double.tryParse(receiverLong ?? '');
+      // Check for specific types of connectivity
+      bool isConnected =
+          connectivityResults.contains(ConnectivityResult.mobile) ||
+              connectivityResults.contains(ConnectivityResult.wifi) ||
+              connectivityResults.contains(ConnectivityResult.ethernet) ||
+              connectivityResults.contains(ConnectivityResult.vpn) ||
+              connectivityResults.contains(ConnectivityResult.bluetooth) ||
+              connectivityResults.contains(ConnectivityResult.other);
 
-    LatLng sourceLocation = LatLng(parcelLat1!, parcelLong1!);
-    LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
-    // userLatitude.value = destinationLocation.latitude;
-    // userLongitude.value = destinationLocation.longitude;
+      print('Is Connected: $isConnected'); // Debug print
+      Position position;
+      if (isConnected) {
+        print('In isConnected');
+        isInternetConnected.value = true;
+        position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
+      } else {
+        print('In NotConnected');
+        isInternetConnected.value = false;
+        position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.low);
+      }
 
-    // Print source and destination locations
-    print('Source Location: $sourceLocation');
-    print('Destination Location: $destinationLocation');
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      acceptOffer.value = prefs.getBool('acceptOffer') ?? false;
+      isRideStarted.value = prefs.getBool('isRideStarted') ?? false;
+      print('acceptOffer.value===${acceptOffer.value}');
+      print('isRideStarted.value===${isRideStarted.value}');
 
-    // Load custom marker icon
-    setState(() {
-      _currentPosition = position;
-      _markers.add(
-        Marker(
-          markerId: MarkerId('current_location'),
-          position: LatLng(position.latitude, position.longitude),
-          icon: controller!.driverIcon,
+      parcelLat = prefs.getString('parcel_lat');
+      parcelLong = prefs.getString('parcel_long');
+      receiverLat = prefs.getString('receiver_lat');
+      receiverLong = prefs.getString('receiver_long');
+
+      print('Parcel Latitude: $parcelLat');
+      print('Parcel Longitude: $parcelLong');
+      print('Receiver Latitude: $receiverLat');
+      print('Receiver Longitude: $receiverLong');
+      double? parcelLat1 = double.tryParse(parcelLat ?? '');
+      double? parcelLong1 = double.tryParse(parcelLong ?? '');
+      double? receiverLat1 = double.tryParse(receiverLat ?? '');
+      double? receiverLong1 = double.tryParse(receiverLong ?? '');
+
+      LatLng sourceLocation = LatLng(parcelLat1!, parcelLong1!);
+      LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
+      // userLatitude.value = destinationLocation.latitude;
+      // userLongitude.value = destinationLocation.longitude;
+
+      // Print source and destination locations
+      print('Source Location: $sourceLocation');
+      print('Destination Location: $destinationLocation');
+
+      // Load custom marker icon
+      setState(() {
+        _currentPosition = position;
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('current_location'),
+            position: LatLng(position.latitude, position.longitude),
+            icon: controller!.driverIcon,
+          ),
+        );
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('source_location'),
+            position: LatLng(sourceLocation.latitude, sourceLocation.longitude),
+            icon: controller!.sourceIcon,
+          ),
+        );
+        _markers.add(
+          Marker(
+            markerId: const MarkerId('destination_location'),
+            position: LatLng(
+                destinationLocation.latitude, destinationLocation.longitude),
+            icon: controller!.destinationIcon,
+          ),
+        );
+
+        _circles.add(
+          Circle(
+            circleId: const CircleId('current_location_circle'),
+            center: LatLng(position.latitude, position.longitude),
+            radius: 1000,
+            // Radius in meters
+            fillColor: Colors.blue.withOpacity(0.5),
+            strokeColor: Colors.blue,
+            strokeWidth: 1,
+          ),
+        );
+      });
+
+      final GoogleMapController mapController = await _controller.future;
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(position.latitude, position.longitude),
+            zoom: 14,
+          ),
         ),
       );
-      _markers.add(
-        Marker(
-          markerId: MarkerId('source_location'),
-          position: LatLng(sourceLocation.latitude, sourceLocation.longitude),
-          icon: controller!.sourceIcon,
-        ),
-      );
-      _markers.add(
-        Marker(
-          markerId: MarkerId('destination_location'),
-          position: LatLng(
-              destinationLocation.latitude, destinationLocation.longitude),
-          icon: controller!.destinationIcon,
-        ),
-      );
+    }
+  }
 
-      _circles.add(
-        Circle(
-          circleId: CircleId('current_location_circle'),
-          center: LatLng(position.latitude, position.longitude),
-          radius: 1000,
-          // Radius in meters
-          fillColor: Colors.blue.withOpacity(0.5),
-          strokeColor: Colors.blue,
-          strokeWidth: 1,
-        ),
-      );
+  void _startLocationUpdates() {
+    _locationTimer = Timer.periodic(Duration(seconds: 10), (timer) {
+      if (controller!.isReceiverLocationReached.value == false) {
+        _getCurrentLocation();
+      }
     });
-
-    final GoogleMapController mapController = await _controller.future;
-    mapController.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 14,
-        ),
-      ),
-    );
   }
 
   Future<void> _animateToCurrentLocation() async {
@@ -156,6 +212,7 @@ class _DriverRequestNotificationScreenState
   @override
   void dispose() {
     _messageStreamController.close();
+    _locationTimer.cancel(); // Cancel the timer when the widget is disposed
     super.dispose();
   }
 
@@ -180,20 +237,20 @@ class _DriverRequestNotificationScreenState
             child: Scaffold(
               bottomSheet: Padding(
                   padding: const EdgeInsets.all(30.0),
-                  child: controller.isRideStarted.value == true
-                      ? Container(child: Text('Ride Started'))
+                  child: controller.isRideStarted.value == true ||
+                          isRideStarted.value == true
+                      ? Container(child: const Text('Ride Started'))
                       : Obx(
                           () => acceptOffer.value == true
                               ? CustomButton(
                                   buttonText: "Proceed",
                                   onPress: () {
-                                    controller.setParcelLocationToReceiver();
-                                    // controller.createHistory(
-                                    //     isProceed: '1',
-                                    //     isStart: '1',
-                                    //     isEnd: '0');
-                                    // controller.startLocationCheckIfNearByHundredMeters();
-                                    // Get.to(() => const BottomBarScreen());
+                                    setPreferencesForProceed();
+                                    // controller.setParcelLocationToCurrent();
+                                    controller.createHistory(
+                                        isProceed: '1',
+                                        isStart: '1',
+                                        isEnd: '0');
                                   },
                                 )
                               : Text(
@@ -236,6 +293,26 @@ class _DriverRequestNotificationScreenState
                         ),
                       ),
                       SizedBox(height: 10.h),
+                      Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: 45,
+                        decoration: BoxDecoration(
+                            color: isInternetConnected.value == true
+                                ? Colors.black
+                                : Colors.red),
+                        child: Center(
+                            child: isInternetConnected.value == true
+                                ? Text(
+                                    'Connected to Internet',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.white),
+                                  )
+                                : Text(
+                                    'Not Connected to Internet',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.white),
+                                  )),
+                      ),
                       Expanded(
                         child: Container(
                           foregroundDecoration: BoxDecoration(
@@ -266,7 +343,8 @@ class _DriverRequestNotificationScreenState
                       ),
                     ],
                   ),
-                  controller.isParcelLocationReached.value
+                  controller.isParcelLocationReached.value &&
+                          parcelReceived.value == false
                       ? Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -303,7 +381,12 @@ class _DriverRequestNotificationScreenState
                                           child: ElevatedButton(
                                             onPressed: () async {
                                               // Handle yes action
-                                              setPreferences();
+                                              await setPreferencesForParcelCollected();
+                                              parcelReceived.value = true;
+                                              controller.createHistory(
+                                                  isProceed: '0',
+                                                  isStart: '0',
+                                                  isEnd: '0');
                                             },
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.grey,
@@ -333,7 +416,7 @@ class _DriverRequestNotificationScreenState
                                               backgroundColor: Colors.blueGrey,
                                             ),
                                             child: Text(
-                                              'No',
+                                              'Waiting',
                                               style: TextStyle(
                                                   color: Colors.white),
                                             ),
@@ -364,15 +447,15 @@ class _DriverRequestNotificationScreenState
                                 ? Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Center(
-                                        child: const Text(
+                                      const Center(
+                                        child: Text(
                                           'Request Status Successfully Updated',
                                           style: TextStyle(fontSize: 20),
                                           textAlign: TextAlign
                                               .center, // Align text to the center
                                         ),
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         height: 20,
                                       ),
                                       Image.asset(
@@ -386,9 +469,12 @@ class _DriverRequestNotificationScreenState
                                       ElevatedButton(
                                         onPressed: () {
                                           // Add your onPressed code here!
-                                          controller.cashOnDelivery.value = false;
-                                          controller.isReceiverLocationReached.value = false;
-                                          controller.isReceiverLocationReached.value = false;
+                                          controller.cashOnDelivery.value =
+                                              false;
+                                          controller.isReceiverLocationReached
+                                              .value = false;
+                                          controller.isReceiverLocationReached
+                                              .value = false;
                                           Get.offAll(const BottomBarScreen());
                                         },
                                         child: const Text(
@@ -634,11 +720,11 @@ class _DriverRequestNotificationScreenState
                                                         height: 20,
                                                         width: 20,
                                                         child:
-                                                            CircularProgressIndicator(
+                                                            const CircularProgressIndicator(
                                                           color:
                                                               Colors.blueGrey,
                                                         ))
-                                                    : Text('Yes',
+                                                    : const Text('Yes',
                                                         style: TextStyle(
                                                             color:
                                                                 Colors.white)),
@@ -663,7 +749,7 @@ class _DriverRequestNotificationScreenState
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.red,
                                                 ),
-                                                child: Text(
+                                                child: const Text(
                                                   'No',
                                                   style: TextStyle(
                                                       color: Colors.white),

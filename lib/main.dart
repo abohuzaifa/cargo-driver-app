@@ -26,20 +26,27 @@ import 'home/driver_request_notification_screen.dart';
 import 'home/find_trip_online.dart';
 import 'package:http/http.dart' as http;
 
-void setPreferences() async {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Handling a background message: ${message.messageId}");
+}
+
+setPreferencesForParcelCollected() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('isStart', '0');
   await prefs.setString('isEnd', '0');
-  print('Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
-  print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
+  await prefs.setString('isProceed', '0');
 }
-void setPreferencesForProceed() async {
+
+setPreferencesForProceed() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.setString('isProceed', '1');
   await prefs.setString('isStart', '1');
   await prefs.setString('isEnd', '0');
-  print('Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
+  print(
+      'Foreground: prefs.getString(isStart)====${prefs.getString('isStart')}');
   print('Foreground: prefs.getString(isEnd)====${prefs.getString('isEnd')}');
+  print(
+      'Foreground: prefs.getString(isProceed)====${prefs.getString('isProceed')}');
 }
 
 Position? position; // Declare as nullable
@@ -63,10 +70,6 @@ Future<String?> getFCMToken() async {
 }
 
 final _firebaseMessaging = FirebaseMessaging.instance;
-
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
-}
 
 Future<void> initNotifications() async {
   await _firebaseMessaging.requestPermission();
@@ -253,7 +256,7 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
 
-  Timer.periodic(const Duration(minutes: 1), (timer) async {
+  Timer.periodic(const Duration(minutes: 15), (timer) async {
     print('FLUTTER BACKGROUND SERVICE: ${DateTime.now()}');
 
     // Ensure the service is running in the foreground
@@ -267,8 +270,9 @@ void onStart(ServiceInstance service) async {
     sharedPreferences.reload(); // Ensure you reload the preferences
     String? isStart = sharedPreferences.getString('isStart');
     String? isEnd = sharedPreferences.getString('isEnd');
-    String? isProceed = sharedPreferences.getString('isEnd');
-    print('Background: Retrieved isStart: $isStart, isEnd: $isEnd');
+    String? isProceed = sharedPreferences.getString('isProceed');
+    print(
+        'Background: Retrieved isStart: $isStart, isEnd: $isEnd, isProceed: $isProceed');
 
     try {
       // Obtain the current position
@@ -276,7 +280,8 @@ void onStart(ServiceInstance service) async {
           desiredAccuracy: LocationAccuracy.high);
       print(
           'Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
-      await createHistory(isStart: isStart!,isEnd: isEnd!);
+      await createHistory(
+          isStart: isStart!, isEnd: isEnd!, isProceed: isProceed!);
     } catch (e) {
       print('Error obtaining position: $e');
       return;
@@ -357,8 +362,13 @@ Future<String?> getRequestId() async {
   return prefs.getString('request_id');
 }
 
-Future<bool> createHistory({required String isStart,required String isEnd}) async {
-// Retrieve the request_id
+Future<bool> createHistory(
+    {required String isStart,
+    required String isEnd,
+    required String isProceed}) async {
+  position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high);
+  print('position==${position}');
   address.value = await getAddress(position!.latitude, position!.longitude);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? requestId = prefs.getString('request_id');
@@ -376,7 +386,7 @@ Future<bool> createHistory({required String isStart,required String isEnd}) asyn
     'address': address.value,
     'is_start': isStart,
     'is_end': isEnd,
-    'is_Proceed': '',
+    'is_proceed': isProceed,
   });
   print(
       'Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');

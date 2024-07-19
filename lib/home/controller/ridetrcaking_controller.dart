@@ -15,6 +15,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/auth_controller.dart';
 import '../../api/user_repo.dart';
+import '../../main.dart';
 import '../driver_request_notification_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -24,8 +25,8 @@ class RideTrackingController extends GetxController implements GetxService {
   RxBool isLoading = false.obs;
   RxBool isParcelLocationReached = false.obs;
   RxBool isReceiverLocationReached = false.obs;
-  late Timer _locationCheckTimer;
-  late Timer _historyTimer;
+  late Timer _historyTimerForParcel;
+  late Timer _historyTimerForReceiver;
   RxString message = ''.obs;
   RxBool paymentStatusDone = false.obs;
   RxBool cashOnDelivery = false.obs; // Initialize the variable
@@ -34,11 +35,26 @@ class RideTrackingController extends GetxController implements GetxService {
 
   LatLng parcelLocation = LatLng(31.4926, 74.3925); // Example parcel location
 
+  final StreamController<bool> _parcelLocationController =
+  StreamController<bool>.broadcast();
+
+  Stream<bool> get parcelLocationStream => _parcelLocationController.stream;
+
+  final StreamController<bool> _parcelLocationControllerForReceiver =
+  StreamController<bool>.broadcast();
+
+  Stream<bool> get receiverLocationStream =>
+      _parcelLocationControllerForReceiver.stream;
+
   final UserRepo userRepo;
 
   RideTrackingController({required this.userRepo});
 
   late GoogleMapController _mapController;
+  var parcelLat;
+  var parcelLong;
+  var receiverLat;
+  var receiverLong;
 
   GoogleMapController get mapController => _mapController;
   late StreamSubscription<Position> streamSubscription;
@@ -99,28 +115,6 @@ class RideTrackingController extends GetxController implements GetxService {
     }
   }
 
-  void startLocationCheckIfNearByHundredMeters() {
-    print('In startLocationCheckIfNearByHundredMeters');
-
-    _locationCheckTimer = Timer.periodic(Duration(minutes: 5), (timer) {
-      print('latitude.value in startLocationCheck ======${latitude.value}');
-      print('longitude.value in startLocationCheck ${longitude.value}');
-
-      LatLng currentLocation = LatLng(latitude.value, longitude.value);
-
-      double distance = _calculateDistance(currentLocation, parcelLocation);
-      print('Distance to parcel location: $distance meters');
-
-      if (distance <= 100) {
-        isParcelLocationReached.value = true;
-        _historyTimer.cancel();
-        _locationCheckTimer.cancel();
-
-        timer.cancel(); // Stop the timer after showing the dialog
-      }
-    });
-  }
-
   void setParcelLocationToCurrent() {
     print(' In setParcelLocationToCurrent');
     print(
@@ -149,7 +143,7 @@ class RideTrackingController extends GetxController implements GetxService {
   Future<String> getAddress(double latitude, double longitude) async {
     try {
       List<Placemark> places =
-          await placemarkFromCoordinates(latitude, longitude);
+      await placemarkFromCoordinates(latitude, longitude);
       Placemark place = places.first;
       address.value = 'Address: ${place.locality}, ${place.country}';
     } catch (e) {
@@ -158,13 +152,12 @@ class RideTrackingController extends GetxController implements GetxService {
     return address.value;
   }
 
-  Future createRideHistory(
-      {required String requestId,
-      required String lat,
-      required String long,
-      String? address,
-      required String isStart,
-      required String isEnd}) async {
+  Future createRideHistory({required String requestId,
+    required String lat,
+    required String long,
+    String? address,
+    required String isStart,
+    required String isEnd}) async {
     var response = await userRepo.createRideHistory(
         requestId: requestId,
         lat: lat,
@@ -175,14 +168,15 @@ class RideTrackingController extends GetxController implements GetxService {
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       AppUtils.showDialog(
           'Updated Success',
-          () => () {
-                Get.back();
-              });
+              () =>
+              () {
+            Get.back();
+          });
     }
   }
 
-  Future<void> startLocationTracking(
-      String sourceLat, String sourceLong) async {
+  Future<void> startLocationTracking(String sourceLat,
+      String sourceLong) async {
     Map req = {
       "status": "active",
       "latitude": sourceLat,
@@ -210,28 +204,34 @@ class RideTrackingController extends GetxController implements GetxService {
     try {
       // Request route from current location to source
       var currentToSourceResponse = await http.get(Uri.parse(
-          'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${sourceLocation.latitude},${sourceLocation.longitude}&key=$apiKey'));
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation
+              .latitude},${currentLocation
+              .longitude}&destination=${sourceLocation
+              .latitude},${sourceLocation.longitude}&key=$apiKey'));
       var currentToSourceData = jsonDecode(currentToSourceResponse.body);
       if (currentToSourceData['routes'].isEmpty) {
         throw Exception('No routes found from current location to source.');
       }
       var currentToSourceEncodedPoints =
-          currentToSourceData['routes'][0]['overview_polyline']['points'];
+      currentToSourceData['routes'][0]['overview_polyline']['points'];
       var currentToSourcePoints =
-          decodeEncodedPolyline(currentToSourceEncodedPoints);
+      decodeEncodedPolyline(currentToSourceEncodedPoints);
 
       // Request route from source to destination
       var sourceToDestinationResponse = await http.get(Uri.parse(
-          'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation
+              .latitude},${sourceLocation
+              .longitude}&destination=${destinationLocation
+              .latitude},${destinationLocation.longitude}&key=$apiKey'));
       var sourceToDestinationData =
-          jsonDecode(sourceToDestinationResponse.body);
+      jsonDecode(sourceToDestinationResponse.body);
       if (sourceToDestinationData['routes'].isEmpty) {
         throw Exception('No routes found from source to destination.');
       }
       var sourceToDestinationEncodedPoints =
-          sourceToDestinationData['routes'][0]['overview_polyline']['points'];
+      sourceToDestinationData['routes'][0]['overview_polyline']['points'];
       var sourceToDestinationPoints =
-          decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+      decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
       // Add current location to pathPoints
       pathPoints.add(currentLocation);
@@ -260,11 +260,15 @@ class RideTrackingController extends GetxController implements GetxService {
 
   List<LatLng> decodeEncodedPolyline(String encoded) {
     List<LatLng> points = [];
-    int index = 0, len = encoded.length;
-    int lat = 0, lng = 0;
+    int index = 0,
+        len = encoded.length;
+    int lat = 0,
+        lng = 0;
 
     while (index < len) {
-      int b, shift = 0, result = 0;
+      int b,
+          shift = 0,
+          result = 0;
       do {
         b = encoded.codeUnitAt(index++) - 63;
         result |= (b & 0x1f) << shift;
@@ -403,7 +407,7 @@ class RideTrackingController extends GetxController implements GetxService {
     required String amount,
   }) async {
     var response =
-        await userRepo.bidOnUserRequest(requestId: requestId, amount: amount);
+    await userRepo.bidOnUserRequest(requestId: requestId, amount: amount);
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       Get.offAll(() => const DriverRequestNotificationScreen());
     }
@@ -455,9 +459,12 @@ class RideTrackingController extends GetxController implements GetxService {
   Future<void> updatePaymentStatus() async {
     // Initialize SharedPreferences and AuthRepo
     print(
-        'Get.find<AuthController>().authRepo.getAuthToken()====${Get.find<AuthController>().authRepo.getAuthToken()}');
+        'Get.find<AuthController>().authRepo.getAuthToken()====${Get
+            .find<AuthController>()
+            .authRepo
+            .getAuthToken()}');
     final SharedPreferences sharedPreferences =
-        await SharedPreferences.getInstance();
+    await SharedPreferences.getInstance();
     String? requestId = sharedPreferences.getString('request_id');
     print('Retrieved request_id: $requestId');
     isLoading.value = true;
@@ -466,7 +473,10 @@ class RideTrackingController extends GetxController implements GetxService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       "Authorization":
-          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+      "Bearer ${Get
+          .find<AuthController>()
+          .authRepo
+          .getAuthToken()}"
     };
     final body = jsonEncode({
       'request_id': requestId,
@@ -514,7 +524,7 @@ class RideTrackingController extends GetxController implements GetxService {
     required String code,
   }) async {
     final SharedPreferences sharedPreferences =
-        await SharedPreferences.getInstance();
+    await SharedPreferences.getInstance();
     isLoading.value = true;
     codeController.clear();
     final url = Uri.parse('http://delivershipment.com/api/markCompleteRequest');
@@ -522,7 +532,10 @@ class RideTrackingController extends GetxController implements GetxService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       "Authorization":
-          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+      "Bearer ${Get
+          .find<AuthController>()
+          .authRepo
+          .getAuthToken()}"
     };
     final body = jsonEncode({
       'code': code,
@@ -558,7 +571,8 @@ class RideTrackingController extends GetxController implements GetxService {
         isLoading.value = false;
 
         print(
-            'Failed to markCompleteRequest. Status code: ${response.statusCode}');
+            'Failed to markCompleteRequest. Status code: ${response
+                .statusCode}');
         print('Response body: ${response.body}');
       }
     } catch (e) {
@@ -585,7 +599,10 @@ class RideTrackingController extends GetxController implements GetxService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       "Authorization":
-          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
+      "Bearer ${Get
+          .find<AuthController>()
+          .authRepo
+          .getAuthToken()}"
     };
     final body = jsonEncode({
       'request_id': requestId,
@@ -605,9 +622,27 @@ class RideTrackingController extends GetxController implements GetxService {
         // Successfully created history
         print('Successful to create history');
         print('Response body: ${response.body}');
-        isRideStarted.value = true;
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setBool('isRideStarted', true);
+        prefs.setString('isEnd', '0');
+        if (isProceed == '1') {
+          isRideStarted.value = true;
+          prefs.setString('isProceed', '1');
+          startCheckForParcelLocation(); // for checking parcel location in  App
+          _startPeriodicHistoryUpdatesForParcel(
+              isProceed: isProceed,
+              isStart: isStart,
+              isEnd: isEnd); // for sending ride status to backend
+        } else if (isProceed == '0') {
+          prefs.setString('isProceed', '0');
+          prefs.setString('isStart', '0');
+          startCheckForReceiverLocation(); // for checking parcel location in  App
+          _startPeriodicHistoryUpdatesForReceiver(
+              isProceed: isProceed,
+              isStart: isStart,
+              isEnd: isEnd); // for sending ride status to backend
+        }
         update();
-        _startPeriodicHistoryUpdates(isProceed);
       } else {
         // Error creating history
         print('Failed to create history. Status code: ${response.statusCode}');
@@ -625,10 +660,23 @@ class RideTrackingController extends GetxController implements GetxService {
     return prefs.getString('request_id');
   }
 
-  void _startPeriodicHistoryUpdates(String isProceed) {
+  void _startPeriodicHistoryUpdatesForReceiver({required String isProceed,
+    required String isStart,
+    required String isEnd}) {
+    print('In _startPeriodicHistoryUpdatesForReceiver');
+    const duration = Duration(minutes: 15); // Adjust the interval as needed
+    _historyTimerForReceiver = Timer.periodic(duration, (timer) {
+      createHistory(isStart: isStart, isEnd: isEnd, isProceed: isProceed);
+      print('In _startPeriodicHistoryUpdatesForReceiver Ping done');
+    });
+  }
+
+  void _startPeriodicHistoryUpdatesForParcel({required String isProceed,
+    required String isStart,
+    required String isEnd}) {
     print('In _startPeriodicHistoryUpdates');
-    const duration = Duration(minutes: 5); // Adjust the interval as needed
-    _historyTimer = Timer.periodic(duration, (timer) {
+    const duration = Duration(minutes: 15); // Adjust the interval as needed
+    _historyTimerForParcel = Timer.periodic(duration, (timer) {
       if (isRideStarted.value == true) {
         createHistory(isStart: '1', isEnd: '0', isProceed: isProceed);
         print('In _startPeriodicHistoryUpdates Ping done');
@@ -636,5 +684,105 @@ class RideTrackingController extends GetxController implements GetxService {
         timer.cancel();
       }
     });
+  }
+
+  startCheckForReceiverLocation() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String? receiverLat = prefs.getString('receiver_lat');
+    String? receiverLong = prefs.getString('receiver_long');
+
+    if (receiverLat != null && receiverLong != null) {
+      double receiverLatitude = double.parse(receiverLat);
+      double receiverLongitude = double.parse(receiverLong);
+
+      print('Receiver Latitude: $receiverLatitude');
+      print('Receiver Longitude: $receiverLongitude');
+
+      // Listen for continuous location updates
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter:
+        10, // Minimum distance (in meters) to move before update
+      );
+
+      Geolocator.getPositionStream(locationSettings: locationSettings)
+          .listen((Position position) {
+        print(
+            'Position obtained: latitude=${position
+                .latitude}, longitude=${position.longitude}');
+
+        double distanceInMeters = Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          receiverLatitude,
+          receiverLongitude,
+        );
+
+        print('Distance to receiver: $distanceInMeters meters');
+
+        if (distanceInMeters < 100) {
+          // Alert the app
+          print('You are within 100 meters of the receiver location!');
+          isReceiverLocationReached.value = true;
+          _historyTimerForReceiver.cancel();
+          _parcelLocationControllerForReceiver.add(true);
+        } else {
+          _parcelLocationControllerForReceiver.add(false);
+        }
+      });
+    } else {
+      print('Receiver location not found in SharedPreferences');
+    }
+  }
+
+  startCheckForParcelLocation() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    String? parcelLat = prefs.getString('parcel_lat');
+    String? parcelLong = prefs.getString('parcel_long');
+
+    if (parcelLat != null && parcelLong != null) {
+      double parcelLatitude = double.parse(parcelLat);
+      double parcelLongitude = double.parse(parcelLong);
+
+      print('Parcel Latitude: $parcelLat');
+      print('Parcel Longitude: $parcelLong');
+
+      // Listen for continuous location updates
+      LocationSettings locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter:
+        10, // Minimum distance (in meters) to move before update
+      );
+
+      Geolocator.getPositionStream(locationSettings: locationSettings)
+          .listen((Position position) {
+        print(
+            'Position obtained: latitude=${position
+                .latitude}, longitude=${position.longitude}');
+
+        double distanceInMeters = Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          parcelLatitude,
+          parcelLongitude,
+        );
+
+        print('Distance to parcel: $distanceInMeters meters');
+
+        if (distanceInMeters < 100) {
+          // Alert the app
+          print('You are within 100 meters of the parcel location!');
+          isParcelLocationReached.value = true;
+          _historyTimerForParcel.cancel();
+          _parcelLocationController.add(true);
+        } else {
+          _parcelLocationController.add(false);
+        }
+      });
+    } else {
+      print('Parcel location not found in SharedPreferences');
+    }
   }
 }
