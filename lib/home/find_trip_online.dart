@@ -52,7 +52,7 @@ class _FindTripOnlineState extends State<FindTripOnline> {
     var requestId = message.data['request_id'];
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('request_id', requestId);
-    const String apiUrl = 'http://delivershipment.com/api/getRequest';
+    const String apiUrl = 'https://thardi.com/api/getRequest';
 
     try {
       final response = await http.post(

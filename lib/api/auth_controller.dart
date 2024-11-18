@@ -14,7 +14,6 @@ import './auth_repo.dart';
 class AuthController extends GetxController implements GetxService {
   final AuthRepo authRepo;
   AuthController({required this.authRepo});
-
   int? forgotUserId;
   String? forgotUserPhoneNo;
   final bool _notification = true;
@@ -62,13 +61,20 @@ class AuthController extends GetxController implements GetxService {
     );
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       Map<String, dynamic> result = response[APIRESPONSE.SUCCESS];
+
+      // Save user data
       authRepo.saveLoginUserData(user: UserModel.fromJson(result));
+
+      // Print the saved user data for debugging
+      print('Saved User Data: ${result.toString()}');
+
       Get.offAll(() => const LocationPage());
     } else {
       AppUtils.showDialog('${response['message']}', () {
         Get.back();
       });
     }
+
     return response;
   }
 

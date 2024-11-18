@@ -35,7 +35,7 @@ setPreferencesForParcelCollected() async {
   await prefs.setString('isStart', '0');
   await prefs.setString('isEnd', '0');
   await prefs.setString('isProceed', '0');
-}
+} 
 
 setPreferencesForProceed() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -365,14 +365,15 @@ Future<String?> getRequestId() async {
 Future<bool> createHistory(
     {required String isStart,
     required String isEnd,
-    required String isProceed}) async {
+    required String isProceed}) async
+{
   position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high);
   print('position==${position}');
   address.value = await getAddress(position!.latitude, position!.longitude);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? requestId = prefs.getString('request_id');
-  final url = Uri.parse('http://delivershipment.com/api/createHistory');
+  final url = Uri.parse('https://thardi.com/api/createHistory');
   final headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

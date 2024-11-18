@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 import 'dart:io';
+import 'package:cargo_driver_app/models/user_model.dart';
 import 'package:dio/dio.dart' as apiClient;
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
@@ -23,7 +24,9 @@ class APISTRUCTURE {
     this.isWantSuccessMessage = false,
     this.contentType,
   });
-  Future<Map<String, dynamic>> requestAPI({bool isShowLoading = false, bool isCheckAuthorization = true}) async {
+
+  Future<Map<String, dynamic>> requestAPI(
+      {bool isShowLoading = false, bool isCheckAuthorization = true}) async {
     String api = "";
     if (isShowLoading) {
       ApiLoader.show();
@@ -31,179 +34,130 @@ class APISTRUCTURE {
     try {
       api = BASE_URL + apiUrl;
       Map<String, String> header = {};
+
       if (contentType != null) {
         header.addAll({"Content-Type": contentType!});
       }
-      log('${Get.find<AuthController>().authRepo.getAuthToken()}');
-      header.addAll({
-        "Accept": "application/json",
-        "Authorization": "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
-      });
+
+      if (isCheckAuthorization) {
+        String? authToken = Get.find<AuthController>().authRepo.getAuthToken();
+        print('authToken=======${authToken}');
+        header.addAll({
+          "Accept": "application/json",
+          "Authorization":
+              "Bearer ${authToken}"
+        });
+
+        log('Authorization token: $authToken');
+      } else {
+        header.addAll({
+          "Accept": "application/json",
+        });
+      }
+
       apiClient.Dio dio = apiClient.Dio();
       apiClient.Options options = apiClient.Options(
-          followRedirects: false,
-          headers: header,
+        followRedirects: false,
+        headers: header,
+        validateStatus: (int? status) => (status ?? 500) < 600,
+      );
 
-          /// Enable for testing complete status
-          validateStatus: (int? status) {
-            return (status ?? 500) < 600;
-          });
-      apiClient.Response<dynamic> response = apiRequestMethod == APIREQUESTMETHOD.GET
-          ? await dio.get(api, options: options)
-          : apiRequestMethod == APIREQUESTMETHOD.POST
-              ? await dio.post(api, data: body, options: options)
+      apiClient.Response<dynamic> response;
+      if (apiRequestMethod == APIREQUESTMETHOD.GET) {
+        response = await dio.get(api, options: options);
+      } else if (apiRequestMethod == APIREQUESTMETHOD.POST) {
+        response = await dio.post(api, data: body, options: options);
+      } else if (apiRequestMethod == APIREQUESTMETHOD.DELETE) {
+        response = await dio.delete(api, options: options);
+      } else {
+        response = await dio.put(api, data: body, options: options);
+      }
 
-              /// Else for Delete Method
-              : apiRequestMethod == APIREQUESTMETHOD.DELETE
-                  ? await dio.delete(api, options: options)
-                  : await dio.put(api, data: body, options: options);
       log('$api response:[${response.statusCode}]----> $response');
 
       if (isShowLoading) {
         ApiLoader.hide();
       }
+
       if (response.statusCode == 200) {
         return {APIRESPONSE.SUCCESS: response.data};
       }
 
-      Map<String, dynamic> responseResult = {};
-      if (response.statusCode != null) {
-        responseResult = response.data;
-      } else {
-        responseResult = {APIRESPONSE.ERROR: "Something went wrong"};
-      }
+      Map<String, dynamic> responseResult = response.statusCode != null
+          ? response.data
+          : {APIRESPONSE.ERROR: "Something went wrong"};
+
       return responseResult;
     } on SocketException {
-      if (isShowLoading) {
-        ApiLoader.hide();
-      }
-      showCupertinoModalPopup(
-        context: Get.context!,
-        builder: (context) => CupertinoAlertDialog(
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Get.back(),
-              child: const Text('Ok'),
-            )
-          ],
-          content: const Text('Internet Connection Error'),
-        ),
-      );
-
+      _handleException(isShowLoading, "Internet Connection Error");
       return {APIRESPONSE.EXCEPTION: APIEXCEPTION.SOCKET};
     } on HttpException {
-      if (isShowLoading) {
-        ApiLoader.hide();
-      }
-      showCupertinoModalPopup(
-        context: Get.context!,
-        builder: (context) => CupertinoAlertDialog(
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Get.back(),
-              child: const Text('Ok'),
-            )
-          ],
-          content: const Text('Internet Connection Error'),
-        ),
-      );
+      _handleException(isShowLoading, "Internet Connection Error");
       return {APIRESPONSE.EXCEPTION: APIEXCEPTION.HTTP};
     } on FormatException {
-      if (isShowLoading) {
-        ApiLoader.hide();
-      }
-      showCupertinoModalPopup(
-        context: Get.context!,
-        builder: (context) => CupertinoAlertDialog(
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Get.back(),
-              child: const Text('Ok'),
-            )
-          ],
-          content: const Text('Server Bad response'),
-        ),
-      );
-
+      _handleException(isShowLoading, "Server Bad response");
       return {APIRESPONSE.EXCEPTION: APIEXCEPTION.FORMAT};
     } on apiClient.DioException catch (e) {
-      Map<String, dynamic> exception = {};
       if (isShowLoading) {
         ApiLoader.hide();
       }
-      showCupertinoModalPopup(
-        context: Get.context!,
-        builder: (context) => CupertinoAlertDialog(
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Get.back(),
-              child: const Text('Ok'),
-            )
-          ],
-          content: Text(e.message ?? ''),
-        ),
-      );
-      switch (e.type) {
-        case apiClient.DioExceptionType.connectionTimeout:
-          exception = {APIRESPONSE.EXCEPTION: "Connection timeout"};
-          break;
-        case apiClient.DioExceptionType.sendTimeout:
-          exception = {APIRESPONSE.EXCEPTION: "Sent timeout"};
-          break;
-        case apiClient.DioExceptionType.receiveTimeout:
-          exception = {APIRESPONSE.EXCEPTION: "Receive timeout"};
-          break;
-        case apiClient.DioExceptionType.connectionError:
-          exception = {APIRESPONSE.EXCEPTION: "Server error"};
-          break;
-        case apiClient.DioExceptionType.badCertificate:
-          exception = {APIRESPONSE.EXCEPTION: "Server Certificate Error"};
-
-          break;
-        case apiClient.DioExceptionType.badResponse:
-          exception = {APIRESPONSE.EXCEPTION: "Bad Request"};
-          break;
-        case apiClient.DioExceptionType.unknown:
-          exception = {APIRESPONSE.EXCEPTION: "Server Unknown Error"};
-
-          break;
-        case apiClient.DioExceptionType.cancel:
-          showCupertinoModalPopup(
-            context: Get.context!,
-            builder: (context) => CupertinoAlertDialog(
-              actions: [
-                CupertinoDialogAction(
-                  onPressed: () => Get.back(),
-                  child: const Text('Ok'),
-                )
-              ],
-              content: const Text('Request cancelled'),
-            ),
-          );
-          exception = {APIRESPONSE.EXCEPTION: "Cancel"};
-          break;
-      }
-      return exception;
+      String errorMessage = _getDioErrorMessage(e);
+      _showErrorDialog(errorMessage);
+      return {APIRESPONSE.EXCEPTION: errorMessage};
     } catch (error) {
       if (isShowLoading) {
         ApiLoader.hide();
       }
-      showCupertinoModalPopup(
-        context: Get.context!,
-        builder: (context) => CupertinoAlertDialog(
-          actions: [
-            CupertinoDialogAction(
-              onPressed: () => Get.back(),
-              child: const Text('Ok'),
-            )
-          ],
-          content: Text(error.toString().contains("SocketException") ? "Internet Connection Error" : error.toString()),
-        ),
-      );
+      String errorMessage = error.toString().contains("SocketException")
+          ? "Internet Connection Error"
+          : error.toString();
+      _showErrorDialog(errorMessage);
+      return {APIRESPONSE.EXCEPTION: errorMessage};
+    }
+  }
 
-      return error.toString().contains("SocketException")
-          ? {APIRESPONSE.EXCEPTION: "Internet Connection Error"}
-          : {APIRESPONSE.EXCEPTION: APIEXCEPTION.UNKNOWN};
+  void _handleException(bool isShowLoading, String message) {
+    if (isShowLoading) {
+      ApiLoader.hide();
+    }
+    _showErrorDialog(message);
+  }
+
+  void _showErrorDialog(String message) {
+    showCupertinoModalPopup(
+      context: Get.context!,
+      builder: (context) => CupertinoAlertDialog(
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Get.back(),
+            child: const Text('Ok'),
+          ),
+        ],
+        content: Text(message),
+      ),
+    );
+  }
+
+  String _getDioErrorMessage(apiClient.DioException e) {
+    switch (e.type) {
+      case apiClient.DioExceptionType.connectionTimeout:
+        return "Connection timeout";
+      case apiClient.DioExceptionType.sendTimeout:
+        return "Sent timeout";
+      case apiClient.DioExceptionType.receiveTimeout:
+        return "Receive timeout";
+      case apiClient.DioExceptionType.connectionError:
+        return "Server error";
+      case apiClient.DioExceptionType.badCertificate:
+        return "Server Certificate Error";
+      case apiClient.DioExceptionType.badResponse:
+        return "Bad Request";
+      case apiClient.DioExceptionType.unknown:
+        return "Server Unknown Error";
+      case apiClient.DioExceptionType.cancel:
+        return "Request cancelled";
+      default:
+        return "Unexpected error";
     }
   }
 }

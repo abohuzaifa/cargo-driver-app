@@ -3,14 +3,18 @@
 class ApplicationUrl {
   // static const String _BASE_URL = 'https://onenetworkapp.com';
   // static const String _BASE_URL = 'http://10.10.5.101:9000';
-  static const String _BASE_URL = 'http://delivershipment.com/api';
+  // static const String _BASE_URL = 'http://delivershipment.com/api';
   // static const String _BASE_URL = 'https://115.186.178.138:8500';
+  static const String _BASE_URL = 'https://thardi.com/api';
+
   static const String _IMAGE_ULR = _BASE_URL;
   static String get IMAGE_ULR => _IMAGE_ULR;
   static const String _LOGIN_URL = '$_BASE_URL/login';
   static String get LOGIN_URL => _LOGIN_URL;
   static const String _VERIFYOTP_URL = '$_BASE_URL/verifyOTP';
+  static const String _PAYMENTSTATUS_URL = '$_BASE_URL/paymentStatus';
   static String get VERIFYOTP_URL => _VERIFYOTP_URL;
+  static String get PAYMENTSTATUS_URL => _PAYMENTSTATUS_URL;
   static const String _GENERATEOTP_URL = '$_BASE_URL/generateOTP';
   static String get GENERATEOTP_URL => _GENERATEOTP_URL;
   static const String _GETALLCATEGORIES_URL = '$_BASE_URL/getAllCategory';

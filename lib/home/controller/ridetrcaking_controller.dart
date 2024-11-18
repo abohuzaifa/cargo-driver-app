@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:math' as math;
 import 'package:cargo_driver_app/api/api_constants.dart';
+import 'package:cargo_driver_app/api/application_url.dart';
 import 'package:cargo_driver_app/util/apputils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points_plus/flutter_polyline_points_plus.dart';
@@ -36,12 +37,12 @@ class RideTrackingController extends GetxController implements GetxService {
   LatLng parcelLocation = LatLng(31.4926, 74.3925); // Example parcel location
 
   final StreamController<bool> _parcelLocationController =
-  StreamController<bool>.broadcast();
+      StreamController<bool>.broadcast();
 
   Stream<bool> get parcelLocationStream => _parcelLocationController.stream;
 
   final StreamController<bool> _parcelLocationControllerForReceiver =
-  StreamController<bool>.broadcast();
+      StreamController<bool>.broadcast();
 
   Stream<bool> get receiverLocationStream =>
       _parcelLocationControllerForReceiver.stream;
@@ -143,7 +144,7 @@ class RideTrackingController extends GetxController implements GetxService {
   Future<String> getAddress(double latitude, double longitude) async {
     try {
       List<Placemark> places =
-      await placemarkFromCoordinates(latitude, longitude);
+          await placemarkFromCoordinates(latitude, longitude);
       Placemark place = places.first;
       address.value = 'Address: ${place.locality}, ${place.country}';
     } catch (e) {
@@ -152,12 +153,13 @@ class RideTrackingController extends GetxController implements GetxService {
     return address.value;
   }
 
-  Future createRideHistory({required String requestId,
-    required String lat,
-    required String long,
-    String? address,
-    required String isStart,
-    required String isEnd}) async {
+  Future createRideHistory(
+      {required String requestId,
+      required String lat,
+      required String long,
+      String? address,
+      required String isStart,
+      required String isEnd}) async {
     var response = await userRepo.createRideHistory(
         requestId: requestId,
         lat: lat,
@@ -168,15 +170,14 @@ class RideTrackingController extends GetxController implements GetxService {
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       AppUtils.showDialog(
           'Updated Success',
-              () =>
-              () {
-            Get.back();
-          });
+          () => () {
+                Get.back();
+              });
     }
   }
 
-  Future<void> startLocationTracking(String sourceLat,
-      String sourceLong) async {
+  Future<void> startLocationTracking(
+      String sourceLat, String sourceLong) async {
     Map req = {
       "status": "active",
       "latitude": sourceLat,
@@ -204,34 +205,28 @@ class RideTrackingController extends GetxController implements GetxService {
     try {
       // Request route from current location to source
       var currentToSourceResponse = await http.get(Uri.parse(
-          'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation
-              .latitude},${currentLocation
-              .longitude}&destination=${sourceLocation
-              .latitude},${sourceLocation.longitude}&key=$apiKey'));
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${currentLocation.latitude},${currentLocation.longitude}&destination=${sourceLocation.latitude},${sourceLocation.longitude}&key=$apiKey'));
       var currentToSourceData = jsonDecode(currentToSourceResponse.body);
       if (currentToSourceData['routes'].isEmpty) {
         throw Exception('No routes found from current location to source.');
       }
       var currentToSourceEncodedPoints =
-      currentToSourceData['routes'][0]['overview_polyline']['points'];
+          currentToSourceData['routes'][0]['overview_polyline']['points'];
       var currentToSourcePoints =
-      decodeEncodedPolyline(currentToSourceEncodedPoints);
+          decodeEncodedPolyline(currentToSourceEncodedPoints);
 
       // Request route from source to destination
       var sourceToDestinationResponse = await http.get(Uri.parse(
-          'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation
-              .latitude},${sourceLocation
-              .longitude}&destination=${destinationLocation
-              .latitude},${destinationLocation.longitude}&key=$apiKey'));
+          'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
       var sourceToDestinationData =
-      jsonDecode(sourceToDestinationResponse.body);
+          jsonDecode(sourceToDestinationResponse.body);
       if (sourceToDestinationData['routes'].isEmpty) {
         throw Exception('No routes found from source to destination.');
       }
       var sourceToDestinationEncodedPoints =
-      sourceToDestinationData['routes'][0]['overview_polyline']['points'];
+          sourceToDestinationData['routes'][0]['overview_polyline']['points'];
       var sourceToDestinationPoints =
-      decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+          decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
       // Add current location to pathPoints
       pathPoints.add(currentLocation);
@@ -260,15 +255,11 @@ class RideTrackingController extends GetxController implements GetxService {
 
   List<LatLng> decodeEncodedPolyline(String encoded) {
     List<LatLng> points = [];
-    int index = 0,
-        len = encoded.length;
-    int lat = 0,
-        lng = 0;
+    int index = 0, len = encoded.length;
+    int lat = 0, lng = 0;
 
     while (index < len) {
-      int b,
-          shift = 0,
-          result = 0;
+      int b, shift = 0, result = 0;
       do {
         b = encoded.codeUnitAt(index++) - 63;
         result |= (b & 0x1f) << shift;
@@ -407,7 +398,7 @@ class RideTrackingController extends GetxController implements GetxService {
     required String amount,
   }) async {
     var response =
-    await userRepo.bidOnUserRequest(requestId: requestId, amount: amount);
+        await userRepo.bidOnUserRequest(requestId: requestId, amount: amount);
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       Get.offAll(() => const DriverRequestNotificationScreen());
     }
@@ -459,24 +450,18 @@ class RideTrackingController extends GetxController implements GetxService {
   Future<void> updatePaymentStatus() async {
     // Initialize SharedPreferences and AuthRepo
     print(
-        'Get.find<AuthController>().authRepo.getAuthToken()====${Get
-            .find<AuthController>()
-            .authRepo
-            .getAuthToken()}');
+        'Get.find<AuthController>().authRepo.getAuthToken()====${Get.find<AuthController>().authRepo.getAuthToken()}');
     final SharedPreferences sharedPreferences =
-    await SharedPreferences.getInstance();
+        await SharedPreferences.getInstance();
     String? requestId = sharedPreferences.getString('request_id');
     print('Retrieved request_id: $requestId');
     isLoading.value = true;
-    final url = Uri.parse('http://delivershipment.com/api/paymentStatus');
+    final url = Uri.parse(ApplicationUrl.PAYMENTSTATUS_URL);
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       "Authorization":
-      "Bearer ${Get
-          .find<AuthController>()
-          .authRepo
-          .getAuthToken()}"
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
     };
     final body = jsonEncode({
       'request_id': requestId,
@@ -524,18 +509,15 @@ class RideTrackingController extends GetxController implements GetxService {
     required String code,
   }) async {
     final SharedPreferences sharedPreferences =
-    await SharedPreferences.getInstance();
+        await SharedPreferences.getInstance();
     isLoading.value = true;
     codeController.clear();
-    final url = Uri.parse('http://delivershipment.com/api/markCompleteRequest');
+    final url = Uri.parse('https://thardi.com/api/markCompleteRequest');
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       "Authorization":
-      "Bearer ${Get
-          .find<AuthController>()
-          .authRepo
-          .getAuthToken()}"
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
     };
     final body = jsonEncode({
       'code': code,
@@ -571,8 +553,7 @@ class RideTrackingController extends GetxController implements GetxService {
         isLoading.value = false;
 
         print(
-            'Failed to markCompleteRequest. Status code: ${response
-                .statusCode}');
+            'Failed to markCompleteRequest. Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
       }
     } catch (e) {
@@ -594,15 +575,12 @@ class RideTrackingController extends GetxController implements GetxService {
     final requestId = await getRequestId(); // Retrieve the request_id
     address.value = await getAddress(latitude.value, longitude.value);
 
-    final url = Uri.parse('http://delivershipment.com/api/createHistory');
+    final url = Uri.parse('https://thardi.com/api/createHistory');
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       "Authorization":
-      "Bearer ${Get
-          .find<AuthController>()
-          .authRepo
-          .getAuthToken()}"
+          "Bearer ${Get.find<AuthController>().authRepo.getAuthToken()}"
     };
     final body = jsonEncode({
       'request_id': requestId,
@@ -660,9 +638,10 @@ class RideTrackingController extends GetxController implements GetxService {
     return prefs.getString('request_id');
   }
 
-  void _startPeriodicHistoryUpdatesForReceiver({required String isProceed,
-    required String isStart,
-    required String isEnd}) {
+  void _startPeriodicHistoryUpdatesForReceiver(
+      {required String isProceed,
+      required String isStart,
+      required String isEnd}) {
     print('In _startPeriodicHistoryUpdatesForReceiver');
     const duration = Duration(minutes: 15); // Adjust the interval as needed
     _historyTimerForReceiver = Timer.periodic(duration, (timer) {
@@ -671,9 +650,10 @@ class RideTrackingController extends GetxController implements GetxService {
     });
   }
 
-  void _startPeriodicHistoryUpdatesForParcel({required String isProceed,
-    required String isStart,
-    required String isEnd}) {
+  void _startPeriodicHistoryUpdatesForParcel(
+      {required String isProceed,
+      required String isStart,
+      required String isEnd}) {
     print('In _startPeriodicHistoryUpdates');
     const duration = Duration(minutes: 15); // Adjust the interval as needed
     _historyTimerForParcel = Timer.periodic(duration, (timer) {
@@ -703,14 +683,13 @@ class RideTrackingController extends GetxController implements GetxService {
       LocationSettings locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter:
-        10, // Minimum distance (in meters) to move before update
+            10, // Minimum distance (in meters) to move before update
       );
 
       Geolocator.getPositionStream(locationSettings: locationSettings)
           .listen((Position position) {
         print(
-            'Position obtained: latitude=${position
-                .latitude}, longitude=${position.longitude}');
+            'Position obtained: latitude=${position.latitude}, longitude=${position.longitude}');
 
         double distanceInMeters = Geolocator.distanceBetween(
           position.latitude,
@@ -753,14 +732,13 @@ class RideTrackingController extends GetxController implements GetxService {
       LocationSettings locationSettings = const LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter:
-        10, // Minimum distance (in meters) to move before update
+            10, // Minimum distance (in meters) to move before update
       );
 
       Geolocator.getPositionStream(locationSettings: locationSettings)
           .listen((Position position) {
         print(
-            'Position obtained: latitude=${position
-                .latitude}, longitude=${position.longitude}');
+            'Position obtained: latitude=${position.latitude}, longitude=${position.longitude}');
 
         double distanceInMeters = Geolocator.distanceBetween(
           position.latitude,
