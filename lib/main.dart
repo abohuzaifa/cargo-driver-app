@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:ui';
 import 'package:cargo_driver_app/api/auth_repo.dart';
 import 'package:cargo_driver_app/splash_screen.dart';
@@ -25,6 +26,7 @@ import 'home/confirm_location_screen.dart';
 import 'home/driver_request_notification_screen.dart';
 import 'home/find_trip_online.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
@@ -35,7 +37,7 @@ setPreferencesForParcelCollected() async {
   await prefs.setString('isStart', '0');
   await prefs.setString('isEnd', '0');
   await prefs.setString('isProceed', '0');
-} 
+}
 
 setPreferencesForProceed() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -77,6 +79,12 @@ Future<void> initNotifications() async {
   print('token=====${fcmToken}');
 }
 
+Future<void> runInBackground() async {
+  await initializeService();
+}
+
+
+
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
 
@@ -85,13 +93,13 @@ Future<void> initializeService() async {
     'my_foreground', // id
     'MY FOREGROUND SERVICE', // title
     description: 'This channel is used for important notifications.',
-    // description
     importance: Importance.low, // importance must be at low or higher level
   );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  // Initialize notifications for iOS or Android
   if (Platform.isIOS || Platform.isAndroid) {
     await flutterLocalNotificationsPlugin.initialize(
       const InitializationSettings(
@@ -101,40 +109,116 @@ Future<void> initializeService() async {
     );
   }
 
+  // Create the notification channel
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
-  await service.configure(
-    androidConfiguration: AndroidConfiguration(
-      // This will be executed when the app is in the foreground or background in a separated isolate
-      onStart: onStart,
+  // Configure the background service
+  try {
+    // Request permissions explicitly
+    PermissionStatus backgroundLocationPermission =
+        await Permission.locationAlways.request();
 
-      // Auto start service
-      autoStart: true,
-      isForegroundMode: true,
+    if (backgroundLocationPermission.isGranted) {
+      await service.configure(
+        androidConfiguration: AndroidConfiguration(
+          // This will be executed when the app is in the foreground or background in a separated isolate
+          onStart: onStart,
 
-      // Uncomment these lines to customize the notification
-      notificationChannelId: 'my_foreground',
-      initialNotificationTitle: 'AWESOME SERVICE',
-      initialNotificationContent: 'Initializing',
-      foregroundServiceNotificationId: 888,
-    ),
-    iosConfiguration: IosConfiguration(
-      // Auto start service
-      autoStart: true,
+          // Auto start service
+          autoStart: true,
+          isForegroundMode: true,
 
-      // This will be executed when the app is in the foreground in a separated isolate
-      onForeground: onStart,
-
-      // You have to enable background fetch capability in the Xcode project
-      onBackground: onIosBackground,
-    ),
-  );
-
-  service.startService();
+          // Customize the notification
+          notificationChannelId: 'my_foreground',
+          initialNotificationTitle: 'AWESOME SERVICE',
+          initialNotificationContent: 'Initializing...',
+          foregroundServiceNotificationId: 888,
+          foregroundServiceTypes: [
+            AndroidForegroundType.location,
+            AndroidForegroundType.dataSync,
+          ],
+        ),
+        iosConfiguration: IosConfiguration(
+          autoStart: true,
+          onForeground: onStart,
+          onBackground: onIosBackground,
+        ),
+      );
+    }
+    // Start the service
+    service.startService();
+  } catch (e) {
+    print("Error initializing service: $e");
+  }
 }
+
+// Future<void> initializeService() async {
+//   final service = FlutterBackgroundService();
+//
+//   /// OPTIONAL, using custom notification channel id
+//   const AndroidNotificationChannel channel = AndroidNotificationChannel(
+//     'my_foreground', // id
+//     'MY FOREGROUND SERVICE', // title
+//     description: 'This channel is used for important notifications.',
+//     // description
+//     importance: Importance.low, // importance must be at low or higher level
+//   );
+//
+//   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//       FlutterLocalNotificationsPlugin();
+//
+//   if (Platform.isIOS || Platform.isAndroid) {
+//     await flutterLocalNotificationsPlugin.initialize(
+//       const InitializationSettings(
+//         iOS: DarwinInitializationSettings(),
+//         android: AndroidInitializationSettings('ic_bg_service_small'),
+//       ),
+//     );
+//   }
+//
+//   await flutterLocalNotificationsPlugin
+//       .resolvePlatformSpecificImplementation<
+//           AndroidFlutterLocalNotificationsPlugin>()
+//       ?.createNotificationChannel(channel);
+//
+//   await service.configure(
+//     androidConfiguration: AndroidConfiguration(
+//       // This will be executed when the app is in the foreground or background in a separated isolate
+//       onStart: onStart,
+//
+//       // Auto start service
+//       autoStart: true,
+//       isForegroundMode: true,
+//
+//       // Uncomment these lines to customize the notification
+//       notificationChannelId: 'my_foreground',
+//       initialNotificationTitle: 'AWESOME SERVICE',
+//       initialNotificationContent: 'Initializing',
+//       foregroundServiceNotificationId: 888,
+//       foregroundServiceTypes:  [
+//         AndroidForegroundType.location,
+//         AndroidForegroundType.dataSync,
+//       ], // Correctly using a list of types // This might be correct for your package version
+//     ),
+//
+//
+//     iosConfiguration: IosConfiguration(
+//       // Auto start service
+//       autoStart: true,
+//
+//       // This will be executed when the app is in the foreground in a separated isolate
+//       onForeground: onStart,
+//
+//       // You have to enable background fetch capability in the Xcode project
+//       onBackground: onIosBackground,
+//     ),
+//   );
+//
+//   service.startService();
+// }
 
 // Future<void> initializeService() async {
 //   final service = FlutterBackgroundService();
@@ -365,8 +449,7 @@ Future<String?> getRequestId() async {
 Future<bool> createHistory(
     {required String isStart,
     required String isEnd,
-    required String isProceed}) async
-{
+    required String isProceed}) async {
   position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high);
   print('position==${position}');
@@ -454,9 +537,24 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
-  await initializeService();
+  requestLocationPermission();
+  // await initializeService();
 
   runApp(const CargoDeleiveryApp());
+}
+
+
+
+Future<void> requestLocationPermission() async {
+  PermissionStatus status = await Permission.location.request();
+  if (status.isGranted) {
+    // Permission granted, start your foreground service
+    // initializeService();
+    runInBackground();
+  } else {
+    // Handle permission denial
+    print("Location permission denied");
+  }
 }
 
 class CargoDeleiveryApp extends StatefulWidget {

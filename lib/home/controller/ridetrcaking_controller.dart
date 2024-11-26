@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../api/auth_controller.dart';
 import '../../api/user_repo.dart';
 import '../../main.dart';
+import '../bottom_navbar.dart';
 import '../driver_request_notification_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -490,6 +491,7 @@ class RideTrackingController extends GetxController implements GetxService {
             sharedPreferences.setBool('hasBidAndWaiting', false);
           }
         }
+        Get.offAll(BottomBarScreen());
       } else {
         // Error markCompleteRequest
         isLoading.value = false;

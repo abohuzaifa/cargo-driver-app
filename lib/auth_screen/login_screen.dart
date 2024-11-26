@@ -137,6 +137,7 @@ class LoginScreen extends StatelessWidget {
                               mobileNumber:
                                   _code.value + _phoneConteroller.text);
                         }
+                        // print('code.value + _phoneConteroller.text=${_code.value + _phoneConteroller.text}');
                         return;
                         // Get.offAll(() => const LocationPage());
                       }),

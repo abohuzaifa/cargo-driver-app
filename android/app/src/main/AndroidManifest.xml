@@ -1,17 +1,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.cargo_driver_app">
+
+
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" /> <!-- Add this permission -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name="${applicationName}"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="cargo_driver_app">
 
@@ -30,13 +36,17 @@
             </intent-filter>
         </receiver>
 
-        <!-- Background Service -->
+        <!-- Background Service with updated foregroundServiceType -->
         <service
-            android:name=".MyBackgroundService"
-            android:enabled="true"
+            android:name="id.flutter.flutter_background_service.BackgroundService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
             android:exported="true"
+            android:enabled="true"
             android:foregroundServiceType="location|dataSync"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+            tools:replace="android:exported">
+            <!-- Other configurations here -->
+        </service>
+        <!-- Updated foregroundServiceType -->
 
         <activity
             android:name="com.example.cargo_driver_app.MainActivity"
@@ -55,16 +65,18 @@
             </intent-filter>
         </activity>
 
-        <!-- Don't delete the meta-data below. This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko" />
+
+        <!-- Flutter Embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
-    <!-- Required to query activities that can process text -->
+    <!-- Queries -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />

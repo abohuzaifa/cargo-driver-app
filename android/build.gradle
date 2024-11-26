@@ -1,9 +1,21 @@
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
 }
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.0.0'  // or at least 7.x
+        // other dependencies
+    }
+}
+
 
 rootProject.buildDir = '../build'
 subprojects {
