@@ -69,6 +69,7 @@ class _DriverRequestNotificationScreenState
 
   Future<void> _initializeState() async {
     await _getCurrentLocation();
+    _animateToCurrentLocation();
     // No need to refresh here, GetX will automatically handle the state update
   }
 
@@ -114,75 +115,78 @@ class _DriverRequestNotificationScreenState
 
       parcelLat = prefs.getString('parcel_lat');
       parcelLong = prefs.getString('parcel_long');
-      receiverLat = prefs.getString('receiver_lat');
-      receiverLong = prefs.getString('receiver_long');
+      // receiverLat = prefs.getString('receiver_lat');
+      // receiverLong = prefs.getString('receiver_long');
 
       print('Parcel Latitude: $parcelLat');
       print('Parcel Longitude: $parcelLong');
-      print('Receiver Latitude: $receiverLat');
-      print('Receiver Longitude: $receiverLong');
+      // print('Receiver Latitude: $receiverLat');
+      // print('Receiver Longitude: $receiverLong');
       double? parcelLat1 = double.tryParse(parcelLat ?? '');
       double? parcelLong1 = double.tryParse(parcelLong ?? '');
-      double? receiverLat1 = double.tryParse(receiverLat ?? '');
-      double? receiverLong1 = double.tryParse(receiverLong ?? '');
+      // double? receiverLat1 = double.tryParse(receiverLat ?? '');
+      // double? receiverLong1 = double.tryParse(receiverLong ?? '');
 
       LatLng sourceLocation = LatLng(parcelLat1!, parcelLong1!);
-      LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
+      // LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
       // userLatitude.value = destinationLocation.latitude;
       // userLongitude.value = destinationLocation.longitude;
 
       // Print source and destination locations
       print('Source Location: $sourceLocation');
-      print('Destination Location: $destinationLocation');
+      // print('Destination Location: $destinationLocation');
 
       // Load custom marker icon
-      setState(() {
-        _currentPosition = position;
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('current_location'),
-            position: LatLng(position.latitude, position.longitude),
-            icon: controller!.driverIcon,
-          ),
-        );
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('source_location'),
-            position: LatLng(sourceLocation.latitude, sourceLocation.longitude),
-            icon: controller!.sourceIcon,
-          ),
-        );
-        _markers.add(
-          Marker(
-            markerId: const MarkerId('destination_location'),
-            position: LatLng(
-                destinationLocation.latitude, destinationLocation.longitude),
-            icon: controller!.destinationIcon,
-          ),
-        );
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+          _markers.add(
+            Marker(
+              markerId: const MarkerId('current_location'),
+              position: LatLng(position.latitude, position.longitude),
+              icon: controller.driverIcon,
+            ),
+          );
+          _markers.add(
+            Marker(
+              markerId: const MarkerId('source_location'),
+              position:
+                  LatLng(sourceLocation.latitude, sourceLocation.longitude),
+              icon: controller.sourceIcon,
+            ),
+          );
+          // _markers.add(
+          //   Marker(
+          //     markerId: const MarkerId('destination_location'),
+          //     position: LatLng(
+          //         destinationLocation.latitude, destinationLocation.longitude),
+          //     icon: controller!.destinationIcon,
+          //   ),
+          // );
 
-        _circles.add(
-          Circle(
-            circleId: const CircleId('current_location_circle'),
-            center: LatLng(position.latitude, position.longitude),
-            radius: 1000,
-            // Radius in meters
-            fillColor: Colors.blue.withOpacity(0.5),
-            strokeColor: Colors.blue,
-            strokeWidth: 1,
-          ),
-        );
-      });
-
-      final GoogleMapController mapController = await _controller.future;
-      mapController.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(position.latitude, position.longitude),
-            zoom: 14,
-          ),
-        ),
-      );
+          _circles.add(
+            Circle(
+              circleId: const CircleId('current_location_circle'),
+              center: LatLng(position.latitude, position.longitude),
+              radius: 1000,
+              // Radius in meters
+              fillColor: Colors.blue.withOpacity(0.5),
+              strokeColor: Colors.blue,
+              strokeWidth: 1,
+            ),
+          );
+        });
+      }
+      //
+      // final GoogleMapController mapController = await _controller.future;
+      // mapController.animateCamera(
+      //   CameraUpdate.newCameraPosition(
+      //     CameraPosition(
+      //       target: LatLng(position.latitude, position.longitude),
+      //       zoom: 14,
+      //     ),
+      //   ),
+      // );
     }
   }
 
@@ -239,11 +243,11 @@ class _DriverRequestNotificationScreenState
                   padding: const EdgeInsets.all(30.0),
                   child: controller.isRideStarted.value == true ||
                           isRideStarted.value == true
-                      ? Container(child: const Text('Ride Started'))
+                      ? Container(child: Text('Ride Started'.tr))
                       : Obx(
                           () => acceptOffer.value == true
                               ? CustomButton(
-                                  buttonText: "Proceed",
+                                  buttonText: "Proceed".tr,
                                   onPress: () {
                                     setPreferencesForProceed();
                                     // controller.setParcelLocationToCurrent();
@@ -254,7 +258,7 @@ class _DriverRequestNotificationScreenState
                                   },
                                 )
                               : Text(
-                                  'Waiting for User to accept your Offer',
+                                  'Waiting for User to accept your Offer'.tr,
                                   style: TextStyle(
                                     fontSize: 15,
                                     color: Colors.black,
@@ -303,12 +307,12 @@ class _DriverRequestNotificationScreenState
                         child: Center(
                             child: isInternetConnected.value == true
                                 ? Text(
-                                    'Connected to Internet',
+                                    'Connected to Internet'.tr,
                                     style: TextStyle(
                                         fontSize: 16, color: Colors.white),
                                   )
                                 : Text(
-                                    'Not Connected to Internet',
+                                    'Not Connected to Internet'.tr,
                                     style: TextStyle(
                                         fontSize: 16, color: Colors.white),
                                   )),
@@ -360,7 +364,7 @@ class _DriverRequestNotificationScreenState
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Have you received the parcel?',
+                                  'Have you received the parcel?'.tr,
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -391,7 +395,7 @@ class _DriverRequestNotificationScreenState
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: Colors.grey,
                                             ),
-                                            child: Text('Yes',
+                                            child: Text('YES'.tr,
                                                 style: TextStyle(
                                                     color: Colors.white)),
                                           ),
@@ -416,7 +420,7 @@ class _DriverRequestNotificationScreenState
                                               backgroundColor: Colors.blueGrey,
                                             ),
                                             child: Text(
-                                              'Waiting',
+                                              'Waiting'.tr,
                                               style: TextStyle(
                                                   color: Colors.white),
                                             ),
@@ -447,9 +451,10 @@ class _DriverRequestNotificationScreenState
                                 ? Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Center(
+                                      Center(
                                         child: Text(
-                                          'Request Status Successfully Updated',
+                                          'Request Status Successfully Updated'
+                                              .tr,
                                           style: TextStyle(fontSize: 20),
                                           textAlign: TextAlign
                                               .center, // Align text to the center
@@ -477,8 +482,8 @@ class _DriverRequestNotificationScreenState
                                               .value = false;
                                           Get.offAll(const BottomBarScreen());
                                         },
-                                        child: const Text(
-                                          'Back to Home',
+                                        child: Text(
+                                          'Back to Home'.tr,
                                           textAlign: TextAlign.center,
                                         ),
                                         style: ElevatedButton.styleFrom(
@@ -498,7 +503,8 @@ class _DriverRequestNotificationScreenState
                                         Container(
                                           margin: EdgeInsets.only(left: 20),
                                           child: Text(
-                                            'Have you reached the destination?',
+                                            'Have you reached the destination?'
+                                                .tr,
                                             style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
@@ -531,8 +537,9 @@ class _DriverRequestNotificationScreenState
                                                               .text
                                                               .isEmpty) {
                                                             Get.snackbar(
-                                                                'Alert',
-                                                                'Please Enter Code',
+                                                                'Alert'.tr,
+                                                                'Please Enter Code'
+                                                                    .tr,
                                                                 backgroundColor:
                                                                     Colors.red);
                                                           } else {
@@ -551,7 +558,7 @@ class _DriverRequestNotificationScreenState
                                                           backgroundColor:
                                                               Colors.grey,
                                                         ),
-                                                        child: Text('Yes',
+                                                        child: Text('YES'.tr,
                                                             style: TextStyle(
                                                                 color: Colors
                                                                     .white)),
@@ -581,7 +588,7 @@ class _DriverRequestNotificationScreenState
                                                               Colors.blueGrey,
                                                         ),
                                                         child: Text(
-                                                          'No',
+                                                          'NO'.tr,
                                                           style: TextStyle(
                                                               color:
                                                                   Colors.white),
@@ -598,7 +605,7 @@ class _DriverRequestNotificationScreenState
                                             Container(
                                               margin: EdgeInsets.only(left: 20),
                                               child: Text(
-                                                'Enter Code',
+                                                'Enter Code'.tr,
                                                 style: TextStyle(
                                                   fontSize: 20,
                                                   fontWeight: FontWeight.bold,
@@ -663,7 +670,8 @@ class _DriverRequestNotificationScreenState
                         : Container(),
                   ),
                   Obx(() => controller.message.value ==
-                          'Did you received payment, If received then press YES Or NOT'
+                          'Did you received payment, If received then press YES otherwise NO'
+                              .tr
                       ? Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -681,7 +689,7 @@ class _DriverRequestNotificationScreenState
                                 Container(
                                   margin: EdgeInsets.only(left: 20),
                                   child: Text(
-                                    'Have you received the payment?',
+                                    'Have you received the payment?'.tr,
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -724,7 +732,7 @@ class _DriverRequestNotificationScreenState
                                                           color:
                                                               Colors.blueGrey,
                                                         ))
-                                                    : const Text('Yes',
+                                                    : Text('YES'.tr,
                                                         style: TextStyle(
                                                             color:
                                                                 Colors.white)),
@@ -749,8 +757,8 @@ class _DriverRequestNotificationScreenState
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.red,
                                                 ),
-                                                child: const Text(
-                                                  'No',
+                                                child: Text(
+                                                  'NO'.tr,
                                                   style: TextStyle(
                                                       color: Colors.white),
                                                 ),

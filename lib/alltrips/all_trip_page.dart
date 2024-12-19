@@ -57,7 +57,7 @@ class AllTripsPage extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.all(10.0.h),
                       child: Text(
-                        'All TRIPS',
+                        'All TRIPS'.tr,
                         style: TextStyle(
                             decoration: TextDecoration.underline,
                             fontSize: 16.sp,
@@ -97,7 +97,7 @@ class AllTripsPage extends StatelessWidget {
                                                         ?.name ??
                                                     ''),
                                                 Text(
-                                                    'Trip ID: ${data?.data?[index].id}')
+                                                    '${'trip_id'.tr} ${data?.data?[index].id}')
                                               ],
                                             ),
                                             SizedBox(
@@ -129,7 +129,7 @@ class AllTripsPage extends StatelessWidget {
                                               height: 10.h,
                                             ),
                                             Text(
-                                                ' Earning: SAR ${data?.data?[index].amount}'),
+                                                ' ${'Earning:'.tr} SAR ${data?.data?[index].amount}'),
                                           ],
                                         ),
                                       ),
@@ -148,8 +148,8 @@ class AllTripsPage extends StatelessWidget {
                 child: CircularProgressIndicator.adaptive(),
               );
             }
-            return const Center(
-              child: Text('No Data'),
+            return Center(
+              child: Text('No Data Found!'.tr),
             );
           }),
     );

@@ -193,10 +193,9 @@ class MessagingService {
   }
 }
 
-// Handler for background messages
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase to ensure it can be used in the background
+  // Initialize Firebase if necessary
 
   debugPrint('Handling a background message: ${message.messageId}');
 
@@ -204,11 +203,19 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (message.notification != null) {
     RemoteNotification? notification = message.notification;
 
-    // Print notification title and body
+    // Print the original notification title and body
     debugPrint('Notification title: ${notification?.title}');
     debugPrint('Notification body: ${notification?.body}');
     print('Notification Title: ${notification?.title}');
     print('Notification Body: ${notification?.body}');
+
+    // Translate title and body to Arabic
+    String translatedTitle = _translateToArabic(notification?.title ?? '');
+    String translatedBody = _translateToArabic(notification?.body ?? '');
+
+    // Print the translated title and body
+    print('Translated Title: $translatedTitle');
+    print('Translated Body: $translatedBody');
   } else {
     debugPrint('Notification is null');
   }
@@ -220,6 +227,24 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   } else {
     debugPrint('Message data is empty');
   }
+}
+
+// Dummy function for translation
+String _translateToArabic(String text) {
+  // Define a simple mapping of known strings
+  Map<String, String> translations = {
+    "New Offer": "عرض جديد",
+    "Payment Received": "تم استلام الدفعة",
+    "Request Updated": "تم تحديث الطلب",
+  };
+
+  // Check if the text exists in the predefined translations
+  if (translations.containsKey(text)) {
+    return translations[text]!;
+  }
+
+  // If not in the map, return the original text
+  return text;
 }
 
 class LocalNoticationsService {

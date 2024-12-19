@@ -275,7 +275,7 @@ class UserRepo {
       isWantSuccessMessage: true,
     );
     return await apiObject.requestAPI(
-        isShowLoading: true, isCheckAuthorization: false);
+        isShowLoading: true, isCheckAuthorization: true);
   }
 
   Future<Map<String, dynamic>> createRideHistory(

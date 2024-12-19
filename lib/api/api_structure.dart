@@ -37,23 +37,31 @@ class APISTRUCTURE {
 
       if (contentType != null) {
         header.addAll({"Content-Type": contentType!});
+        print('Content-Type added: $contentType');
+      } else {
+        print('No Content-Type specified');
       }
 
       if (isCheckAuthorization) {
         String? authToken = Get.find<AuthController>().authRepo.getAuthToken();
-        print('authToken=======${authToken}');
-        header.addAll({
-          "Accept": "application/json",
-          "Authorization":
-              "Bearer ${authToken}"
-        });
-
-        log('Authorization token: $authToken');
+        print('Auth Token retrieved: ${authToken != null ? "Yes" : "No"}');
+        if (authToken != null) {
+          header.addAll({
+            "Accept": "application/json",
+            "Authorization": "Bearer $authToken",
+          });
+          print('Authorization token added to headers');
+        } else {
+          print('Authorization token not available');
+        }
       } else {
         header.addAll({
           "Accept": "application/json",
         });
+        print('Authorization check disabled, only Accept header added');
       }
+
+      print('Final headers: $header');
 
       apiClient.Dio dio = apiClient.Dio();
       apiClient.Options options = apiClient.Options(

@@ -47,7 +47,7 @@ class WalletPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('YOUR BALANCE'),
+                          Text('YOUR BALANCE'.tr),
                           Text(
                             'SAR : ${data.balance ?? '0.0'}',
                             style: TextStyle(
@@ -87,7 +87,7 @@ class WalletPage extends StatelessWidget {
                                 ),
                                 Text('SAR :${data.totalEarning} '),
                                 //${controller.transactionModel.value?.totalEarning ?? '0.0'}
-                                const Text('Total Earning')
+                                Text('Total Earning'.tr)
                               ],
                             ),
                           ),
@@ -116,7 +116,7 @@ class WalletPage extends StatelessWidget {
                                 ),
                                 Text('SAR : ${data.totalWithdraw}'),
                                 //${controller.transactionModel.value?.totalWithdraw ?? "0.0"}
-                                const Text('Total Withdraw')
+                                Text('Total Withdraw'.tr)
                               ],
                             ),
                           ),
@@ -135,7 +135,7 @@ class WalletPage extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Transactions'),
+                              Text('Transactions'.tr),
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
@@ -143,7 +143,7 @@ class WalletPage extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(13),
                                 ),
                                 child: Text(
-                                  'See All',
+                                  'See All'.tr,
                                   style: TextStyle(fontSize: 11.sp),
                                 ),
                               ),

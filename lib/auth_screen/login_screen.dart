@@ -45,7 +45,7 @@ class LoginScreen extends StatelessWidget {
                   SizedBox(height: 10.h),
                   Center(
                     child: Text(
-                      "Hello Again!",
+                      "hello again!".tr,
                       style: TextStyle(
                           fontSize: 32.sp,
                           fontWeight: FontWeight.bold,
@@ -55,7 +55,7 @@ class LoginScreen extends StatelessWidget {
                   SizedBox(height: 10.h),
                   Center(
                     child: Text(
-                      "Fill Your Details or Continue with\n Social media",
+                      "Fill Your Details or Continue with\n Social media".tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 16.sp,
@@ -65,7 +65,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 100.h),
                   Text(
-                    "Mobile Number",
+                    "Mobile Number".tr,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 16.sp,
@@ -76,7 +76,7 @@ class LoginScreen extends StatelessWidget {
                   ContactField(
                     validator: (p0) {
                       if (p0!.isEmpty || p0.length < 9) {
-                        return 'Enter valid phone mumber without country code';
+                        return 'Enter valid phone mumber without country code'.tr;
                       }
                       return null;
                     },
@@ -88,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 25.h),
                   Text(
-                    "Password",
+                    "Password".tr,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 16.sp,
@@ -99,11 +99,11 @@ class LoginScreen extends StatelessWidget {
                   CustomTextField(
                     validator: (p0) {
                       if (p0!.isEmpty || p0.length < 6) {
-                        return 'Enter valid Password';
+                        return 'Enter valid Password'.tr;
                       }
                       return null;
                     },
-                    hintText: 'Password',
+                    hintText: 'Password'.tr,
                     controller: passwordController,
                     obscureText: true,
                     maxLines: 1,
@@ -115,7 +115,7 @@ class LoginScreen extends StatelessWidget {
                         Get.to(() => const ForgotPasswordScreen());
                       },
                       child: Text(
-                        'ForgotPassword?',
+                        'ForgotPassword?'.tr,
                         style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
@@ -127,7 +127,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 25.h),
                   CustomButton(
-                      buttonText: "Login",
+                      buttonText: "Login".tr,
                       onPress: () {
                         if (_formKey.currentState!.validate()) {
                           Get.find<AuthController>().login(
@@ -150,7 +150,7 @@ class LoginScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "New User?  ",
+                          "New User ? ".tr,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 16.sp,
@@ -158,7 +158,7 @@ class LoginScreen extends StatelessWidget {
                               color: textBrownColor),
                         ),
                         Text(
-                          "Create Account",
+                          "Create Account".tr,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 16.sp,

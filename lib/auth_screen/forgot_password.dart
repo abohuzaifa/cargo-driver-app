@@ -17,6 +17,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   TextEditingController passwordController = TextEditingController();
   Timer? _timer;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +50,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   SizedBox(height: 30.h),
                   Center(
                     child: Text(
-                      "Forgot Password",
+                      "Forgot Password".tr,
                       style: TextStyle(
                           fontSize: 32.sp,
                           fontWeight: FontWeight.bold,
@@ -59,7 +60,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   SizedBox(height: 10.h),
                   Center(
                     child: Text(
-                      "Enter Your Mobile Number to reset\nYour Password",
+                      "Enter Your Mobile Number to reset\nYour Password".tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 16.sp,
@@ -72,7 +73,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   SizedBox(height: 25.h),
                   SizedBox(height: 25.h),
                   CustomButton(
-                      buttonText: "Reset Password",
+                      buttonText: "Reset Password".tr,
                       onPress: () {
                         showDialog(
                             context: context,
@@ -106,7 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     ),
                                     SizedBox(height: 20.h),
                                     Text(
-                                      'Check your Mobile',
+                                      'Check your Mobile'.tr,
                                       style: TextStyle(
                                           fontSize: 16.sp,
                                           fontWeight: FontWeight.bold,
@@ -114,7 +115,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     ),
                                     SizedBox(height: 10.h),
                                     Text(
-                                      'We have sent a password recovery code to your Mobile Number',
+                                      'We have sent a password recovery code to your Mobile Number'
+                                          .tr,
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                           fontSize: 16.sp,

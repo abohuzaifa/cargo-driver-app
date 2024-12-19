@@ -220,373 +220,412 @@ class _FindTripOnlineState extends State<FindTripOnline> {
         appBar: AppBar(
           elevation: 0.0,
           backgroundColor: bgColor,
-          leading: InkWell(
-            onTap: () => _key.currentState?.openDrawer(),
-            child: const Icon(Icons.menu),
-          ),
+          // leading: InkWell(
+          //   onTap: () => _key.currentState?.openDrawer(),
+          //   child: const Icon(Icons.menu),
+          // ),
         ),
-        drawer: const Drawer(
-          child: ProfilePage(),
-        ),
+        // drawer: const Drawer(
+        //   child: ProfilePage(),
+        // ),
         body: Builder(builder: (BuildContext context) {
           return Stack(
             alignment: Alignment.center,
             children: [
               Container(
+                // margin: EdgeInsets.only(left: 20, right: 20),
                 foregroundDecoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomRight,
-                    colors: [bgColor, bgColor.withOpacity(0.01)],
-                  ),
-                ),
-                child: GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: Get.find<LocationController>().initialPos,
-                  ),
-                  myLocationEnabled: false,
-                  compassEnabled: false,
-                  onCameraIdle: () async {},
-                ),
+                    gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.center,
+                        colors: [
+                      textcyanColor,
+                      textcyanColor.withOpacity(0.1)
+                    ])),
+                // Column(
+                //   mainAxisSize: MainAxisSize.min,
+                //   // To avoid taking up extra space
+                //   children: [
+                //     Spacer(),
+                //     Image.asset(
+                //       'assets/images/driverImageDummy.jpg',
+                //       fit: BoxFit.contain,
+                //     ),
+                //     SizedBox(height: 20),
+                //
+                //     // Add the text widget
+                //     Text(
+                //       'Nearby Orders are waiting for you',
+                //       style: TextStyle(
+                //         fontWeight: FontWeight.bold, // Bold text
+                //         fontSize: 18, // Font size 18
+                //       ),
+                //     ),
+                //
+                //     SizedBox(height: 20),
+                //     // Add some spacing between the text and button
+                //
+                //     // Add the button
+                //     // Container button
+                //     Container(
+                //       width: double.infinity, // Full width
+                //       height: 45, // Fixed height
+                //       decoration: BoxDecoration(
+                //         color: Colors.blue, // Background color
+                //         borderRadius: BorderRadius.circular(
+                //             8), // Optional: Add rounded corners
+                //       ),
+                //       child: TextButton(
+                //         onPressed: () {
+                //           // Handle button press action
+                //         },
+                //         child: Text(
+                //           'Start',
+                //           style: TextStyle(
+                //             color: Colors.white, // Text color
+                //             fontSize: 16, // Font size
+                //           ),
+                //         ),
+                //       ),
+                //     ),
+                //     Spacer()
+                //   ],
+                // ),
               ),
               //newRequest(_trips, _scrollController),
-              requestReceived.value == true && requestAccepted.value == false
-                  ? Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      margin: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width * 0.1),
-                      // Margin adjusted for mobile devices
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      // Height adjusted for mobile devices
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      // Width adjusted for mobile devices
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Received New Request',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 20),
-                            Container(
-                              margin: EdgeInsets.only(left: 20, right: 20),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: SizedBox(
-                                      height:
-                                          MediaQuery.of(context).size.height *
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "طرد دریفر",
+                    style: TextStyle(
+                        fontSize: 50.sp,
+                        fontFamily: 'RadioCanada',
+                        color: textcyanColor,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  requestReceived.value == true &&
+                          requestAccepted.value == false
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          margin: EdgeInsets.symmetric(
+                              horizontal:
+                                  MediaQuery.of(context).size.width * 0.1),
+                          // Margin adjusted for mobile devices
+                          height: MediaQuery.of(context).size.height * 0.4,
+                          // Height adjusted for mobile devices
+                          width: MediaQuery.of(context).size.width * 0.8,
+                          // Width adjusted for mobile devices
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Received New Request'.tr,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+                                Container(
+                                  margin: EdgeInsets.only(left: 20, right: 20),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
                                               0.06,
-                                      // Height adjusted for mobile devices
-                                      child: ElevatedButton(
-                                        onPressed: () async {
-                                          // Handle accept action
-                                          setState(() {
-                                            requestAccepted.value = true;
-                                          });
-                                          await getRequestData(widget.message);
-                                          _isLoading == true
-                                              ? Center(
-                                                  child:
-                                                      CircularProgressIndicator(),
-                                                )
-                                              : showBottomSheet(
-                                                  context: context,
-                                                  builder: (_) =>
-                                                      // Extract and format createdAt field
+                                          // Height adjusted for mobile devices
+                                          child: ElevatedButton(
+                                            onPressed: () async {
+                                              // Handle accept action
+                                              setState(() {
+                                                requestAccepted.value = true;
+                                              });
+                                              await getRequestData(
+                                                  widget.message);
+                                              _isLoading == true
+                                                  ? Center(
+                                                      child:
+                                                          CircularProgressIndicator(),
+                                                    )
+                                                  : showBottomSheet(
+                                                      context: context,
+                                                      builder: (_) =>
+                                                          // Extract and format createdAt field
 
-                                                      Wrap(
-                                                    children: [
-                                                      Column(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .start,
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
+                                                          Wrap(
                                                         children: [
-                                                          Container(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 8,
-                                                                    bottom: 8),
-                                                            margin:
-                                                                const EdgeInsets
-                                                                    .only(
-                                                                    top: 8,
-                                                                    bottom: 8),
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color:
-                                                                  Colors.white,
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8),
-                                                              boxShadow: [
-                                                                BoxShadow(
+                                                          Column(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .start,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Container(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top: 8,
+                                                                        bottom:
+                                                                            8),
+                                                                margin:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top: 8,
+                                                                        bottom:
+                                                                            8),
+                                                                decoration:
+                                                                    BoxDecoration(
                                                                   color: Colors
-                                                                      .grey
-                                                                      .withOpacity(
-                                                                          0.4),
-                                                                  blurRadius:
-                                                                      10,
-                                                                  spreadRadius:
-                                                                      0,
-                                                                  offset:
-                                                                      const Offset(
+                                                                      .white,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              8),
+                                                                  boxShadow: [
+                                                                    BoxShadow(
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .withOpacity(
+                                                                              0.4),
+                                                                      blurRadius:
+                                                                          10,
+                                                                      spreadRadius:
+                                                                          0,
+                                                                      offset: const Offset(
                                                                           0.0,
                                                                           0.0),
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
-                                                            child: Container(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .all(8),
-                                                              child: Column(
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceBetween,
+                                                                child:
+                                                                    Container(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .all(
+                                                                          8),
+                                                                  child: Column(
+                                                                    crossAxisAlignment:
+                                                                        CrossAxisAlignment
+                                                                            .start,
                                                                     children: [
                                                                       Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
                                                                         children: [
-                                                                          const Icon(
-                                                                              Icons.calendar_month,
-                                                                              color: Colors.black,
-                                                                              size: 16),
-                                                                          const SizedBox(
-                                                                              width: 8),
-                                                                          Padding(
-                                                                            padding:
-                                                                                const EdgeInsets.only(top: 2),
-                                                                            child:
-                                                                                Text(formattedDate!, style: const TextStyle(fontSize: 14)),
+                                                                          Row(
+                                                                            children: [
+                                                                              const Icon(Icons.calendar_month, color: Colors.black, size: 16),
+                                                                              const SizedBox(width: 8),
+                                                                              Padding(
+                                                                                padding: const EdgeInsets.only(top: 2),
+                                                                                child: Text(formattedDate!, style: const TextStyle(fontSize: 14)),
+                                                                              ),
+                                                                            ],
                                                                           ),
+                                                                          Text(
+                                                                              '${'Ride #'.tr} ${mdGetRequestData!.requestData!.id}',
+                                                                              style: const TextStyle(fontSize: 14)),
                                                                         ],
                                                                       ),
-                                                                      Text(
-                                                                          'Ride # ${mdGetRequestData!.requestData!.id}',
-                                                                          style:
-                                                                              const TextStyle(fontSize: 14)),
-                                                                    ],
-                                                                  ),
-                                                                  const Divider(
-                                                                      height:
-                                                                          24,
-                                                                      thickness:
-                                                                          0.5),
-                                                                  Row(
-                                                                    children: [
-                                                                      const Column(
+                                                                      const Divider(
+                                                                          height:
+                                                                              24,
+                                                                          thickness:
+                                                                              0.5),
+                                                                      Row(
                                                                         children: [
-                                                                          Icon(
-                                                                              Icons.near_me,
-                                                                              color: Colors.green,
-                                                                              size: 18),
-                                                                          SizedBox(
-                                                                              height: 2),
-                                                                          SizedBox(
-                                                                            height:
-                                                                                34,
+                                                                          const Column(
+                                                                            children: [
+                                                                              Icon(Icons.near_me, color: Colors.green, size: 18),
+                                                                              SizedBox(height: 2),
+                                                                              SizedBox(
+                                                                                height: 34,
+                                                                                child: DottedLine(
+                                                                                  direction: Axis.vertical,
+                                                                                  lineLength: double.infinity,
+                                                                                  lineThickness: 1,
+                                                                                  dashLength: 2,
+                                                                                  dashColor: Colors.black,
+                                                                                ),
+                                                                              ),
+                                                                              SizedBox(height: 2),
+                                                                              Icon(Icons.location_on, color: Colors.red, size: 18),
+                                                                            ],
+                                                                          ),
+                                                                          const SizedBox(
+                                                                              width: 16),
+                                                                          Expanded(
                                                                             child:
-                                                                                DottedLine(
-                                                                              direction: Axis.vertical,
-                                                                              lineLength: double.infinity,
-                                                                              lineThickness: 1,
-                                                                              dashLength: 2,
-                                                                              dashColor: Colors.black,
+                                                                                Column(
+                                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                                              children: [
+                                                                                const SizedBox(height: 2),
+                                                                                Text('${mdGetRequestData!.requestData!.parcelAddress}' ?? '', style: const TextStyle(fontSize: 14), maxLines: 2),
+                                                                                const SizedBox(height: 22),
+                                                                                Text('${mdGetRequestData!.requestData!.receiverAddress}' ?? '', style: const TextStyle(fontSize: 14), maxLines: 2),
+                                                                                Row(
+                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                                  children: [
+                                                                                    Text(
+                                                                                      'Price'.tr,
+                                                                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                                                                    ),
+                                                                                    const Spacer(),
+                                                                                    Flexible(
+                                                                                      child: TextFormField(
+                                                                                        decoration: InputDecoration(
+                                                                                          counterText: '',
+                                                                                          contentPadding: EdgeInsets.all(1),
+                                                                                          constraints: BoxConstraints(),
+                                                                                          enabledBorder: OutlineInputBorder(
+                                                                                              borderRadius: BorderRadius.only(
+                                                                                                topRight: Radius.circular(13),
+                                                                                                bottomRight: Radius.circular(13),
+                                                                                              ),
+                                                                                              borderSide: BorderSide.none),
+                                                                                          focusedBorder: OutlineInputBorder(
+                                                                                              borderRadius: BorderRadius.only(
+                                                                                                topRight: Radius.circular(13),
+                                                                                                bottomRight: Radius.circular(13),
+                                                                                              ),
+                                                                                              borderSide: BorderSide.none),
+                                                                                          errorBorder: OutlineInputBorder(
+                                                                                              borderRadius: BorderRadius.only(
+                                                                                                topRight: Radius.circular(13),
+                                                                                                bottomRight: Radius.circular(13),
+                                                                                              ),
+                                                                                              borderSide: BorderSide.none),
+                                                                                          disabledBorder: OutlineInputBorder(
+                                                                                              borderRadius: BorderRadius.only(
+                                                                                                topRight: Radius.circular(13),
+                                                                                                bottomRight: Radius.circular(13),
+                                                                                              ),
+                                                                                              borderSide: BorderSide.none),
+                                                                                          filled: true,
+                                                                                          fillColor: Colors.white,
+                                                                                          border: InputBorder.none,
+                                                                                          hintText: "Enter Bidding Price like 450".tr,
+                                                                                          errorStyle: TextStyle(height: 0.05),
+                                                                                          hintStyle: TextStyle(fontSize: 16, color: Colors.grey),
+                                                                                        ),
+                                                                                        controller: amonutController,
+                                                                                        onChanged: (value) {
+                                                                                          print(value);
+                                                                                        },
+                                                                                      ),
+                                                                                    ),
+                                                                                  ],
+                                                                                )
+                                                                              ],
                                                                             ),
                                                                           ),
-                                                                          SizedBox(
-                                                                              height: 2),
-                                                                          Icon(
-                                                                              Icons.location_on,
-                                                                              color: Colors.red,
-                                                                              size: 18),
                                                                         ],
                                                                       ),
-                                                                      const SizedBox(
-                                                                          width:
-                                                                              16),
-                                                                      Expanded(
-                                                                        child:
-                                                                            Column(
-                                                                          crossAxisAlignment:
-                                                                              CrossAxisAlignment.start,
-                                                                          children: [
-                                                                            const SizedBox(height: 2),
-                                                                            Text('${mdGetRequestData!.requestData!.parcelAddress}' ?? '',
-                                                                                style: const TextStyle(fontSize: 14),
-                                                                                maxLines: 2),
-                                                                            const SizedBox(height: 22),
-                                                                            Text('${mdGetRequestData!.requestData!.receiverAddress}' ?? '',
-                                                                                style: const TextStyle(fontSize: 14),
-                                                                                maxLines: 2),
-                                                                            Row(
-                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                              children: [
-                                                                                const Text(
-                                                                                  'Price',
-                                                                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                                                                ),
-                                                                                const Spacer(),
-                                                                                Flexible(
-                                                                                  child: TextFormField(
-                                                                                    decoration: const InputDecoration(
-                                                                                      counterText: '',
-                                                                                      contentPadding: EdgeInsets.all(1),
-                                                                                      constraints: BoxConstraints(),
-                                                                                      enabledBorder: OutlineInputBorder(
-                                                                                          borderRadius: BorderRadius.only(
-                                                                                            topRight: Radius.circular(13),
-                                                                                            bottomRight: Radius.circular(13),
-                                                                                          ),
-                                                                                          borderSide: BorderSide.none),
-                                                                                      focusedBorder: OutlineInputBorder(
-                                                                                          borderRadius: BorderRadius.only(
-                                                                                            topRight: Radius.circular(13),
-                                                                                            bottomRight: Radius.circular(13),
-                                                                                          ),
-                                                                                          borderSide: BorderSide.none),
-                                                                                      errorBorder: OutlineInputBorder(
-                                                                                          borderRadius: BorderRadius.only(
-                                                                                            topRight: Radius.circular(13),
-                                                                                            bottomRight: Radius.circular(13),
-                                                                                          ),
-                                                                                          borderSide: BorderSide.none),
-                                                                                      disabledBorder: OutlineInputBorder(
-                                                                                          borderRadius: BorderRadius.only(
-                                                                                            topRight: Radius.circular(13),
-                                                                                            bottomRight: Radius.circular(13),
-                                                                                          ),
-                                                                                          borderSide: BorderSide.none),
-                                                                                      filled: true,
-                                                                                      fillColor: Colors.white,
-                                                                                      border: InputBorder.none,
-                                                                                      hintText: "123456789",
-                                                                                      errorStyle: TextStyle(height: 0.05),
-                                                                                      hintStyle: TextStyle(fontSize: 16, color: Colors.grey),
-                                                                                    ),
-                                                                                    controller: amonutController,
-                                                                                    onChanged: (value) {
-                                                                                      print(value);
-                                                                                    },
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            )
-                                                                          ],
-                                                                        ),
-                                                                      ),
+                                                                      Row(
+                                                                        mainAxisAlignment:
+                                                                            MainAxisAlignment.spaceBetween,
+                                                                        children: [
+                                                                          CustomButton(
+                                                                              width: 180,
+                                                                              buttonText: 'Cancel'.tr,
+                                                                              onPress: () {
+                                                                                Get.back();
+                                                                              }),
+                                                                          CustomButton(
+                                                                              width: 180,
+                                                                              buttonText: 'Bid Your Price'.tr,
+                                                                              onPress: () async {
+                                                                                if (amonutController.text.isEmpty) {
+                                                                                  Get.snackbar('Alert'.tr, 'Please Enter Bidding Amount'.tr, backgroundColor: Colors.red);
+                                                                                } else {
+                                                                                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                                                                                  prefs.setBool('hasBidAndWaiting', true);
+
+                                                                                  print('amountController.text=${amonutController.text}');
+                                                                                  print('widget.message!.data[request_id]=${widget.message!.data['request_id']}');
+                                                                                  await Get.find<RideTrackingController>().bidOnUserRequests(
+                                                                                    requestId: '${widget.message!.data['request_id']}',
+                                                                                    amount: amonutController.text ?? '',
+                                                                                  );
+                                                                                }
+                                                                              })
+                                                                        ],
+                                                                      )
                                                                     ],
                                                                   ),
-                                                                  Row(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .spaceBetween,
-                                                                    children: [
-                                                                      CustomButton(
-                                                                          width:
-                                                                              180,
-                                                                          buttonText:
-                                                                              'Cancel',
-                                                                          onPress:
-                                                                              () {
-                                                                            Get.back();
-                                                                          }),
-                                                                      CustomButton(
-                                                                          width:
-                                                                              180,
-                                                                          buttonText:
-                                                                              'Bid Your Price',
-                                                                          onPress:
-                                                                              () async {
-                                                                            if (amonutController.text.isEmpty) {
-                                                                              Get.snackbar('Alert', 'Please Enter Bidding Amount', backgroundColor: Colors.red);
-                                                                            } else {
-                                                                              SharedPreferences prefs = await SharedPreferences.getInstance();
-                                                                              prefs.setBool('hasBidAndWaiting', true);
-
-                                                                              print('amountController.text=${amonutController.text}');
-                                                                              print('widget.message!.data[request_id]=${widget.message!.data['request_id']}');
-                                                                              await Get.find<RideTrackingController>().bidOnUserRequests(
-                                                                                requestId: '${widget.message!.data['request_id']}',
-                                                                                amount: amonutController.text ?? '',
-                                                                              );
-                                                                            }
-                                                                          })
-                                                                    ],
-                                                                  )
-                                                                ],
+                                                                ),
                                                               ),
-                                                            ),
-                                                          ),
+                                                            ],
+                                                          )
                                                         ],
-                                                      )
-                                                    ],
-                                                  ),
-                                                );
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors
-                                              .grey, // Set the button color here
+                                                      ),
+                                                    );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors
+                                                  .grey, // Set the button color here
+                                            ),
+                                            child: Text('Accept'.tr,
+                                                style: TextStyle(
+                                                    color: Colors.white)),
+                                          ),
                                         ),
-                                        child: Text('Accept',
-                                            style:
-                                                TextStyle(color: Colors.white)),
                                       ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.05), // Width adjusted for mobile devices
-                                  Expanded(
-                                    child: SizedBox(
-                                      height:
-                                          MediaQuery.of(context).size.height *
+                                      SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.05),
+                                      // Width adjusted for mobile devices
+                                      Expanded(
+                                        child: SizedBox(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
                                               0.06,
-                                      // Height adjusted for mobile devices
-                                      child: ElevatedButton(
-                                        onPressed: () async {
-                                          // Handle reject
-                                          await declineOffer(widget.message);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors
-                                              .blueGrey, // Set the button color here
-                                        ),
-                                        child: Text(
-                                          'Reject',
-                                          style: TextStyle(color: Colors.white),
+                                          // Height adjusted for mobile devices
+                                          child: ElevatedButton(
+                                            onPressed: () async {
+                                              // Handle reject
+                                              await declineOffer(
+                                                  widget.message);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors
+                                                  .blueGrey, // Set the button color here
+                                            ),
+                                            child: Text(
+                                              'Reject'.tr,
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : Container()
+                          ),
+                        )
+                      : Container()
+                ],
+              )
             ],
           );
         }));
@@ -822,13 +861,13 @@ Widget newRequest(List<TripData> data, ScrollController scrollController) {
                                       children: [
                                         CustomButton(
                                             width: 180,
-                                            buttonText: 'Cancel',
+                                            buttonText: 'Cancel'.tr,
                                             onPress: () {
                                               Get.back();
                                             }),
                                         CustomButton(
                                             width: 180,
-                                            buttonText: 'Bid Your Price',
+                                            buttonText: 'Bid Your Price'.tr,
                                             onPress: () async {
                                               Get.back();
                                               await Get.find<

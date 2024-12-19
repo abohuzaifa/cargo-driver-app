@@ -27,9 +27,60 @@ import 'home/driver_request_notification_screen.dart';
 import 'home/find_trip_online.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'localization_service.dart';
+import 'localized_translations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
+  // Initialize Firebase if necessary
+
+  debugPrint('Handling a background message: ${message.messageId}');
+
+  // Check if the message contains a notification
+  if (message.notification != null) {
+    RemoteNotification? notification = message.notification;
+
+    // Print the original notification title and body
+    debugPrint('Notification title: ${notification?.title}');
+    debugPrint('Notification body: ${notification?.body}');
+    print('Notification Title: ${notification?.title}');
+    print('Notification Body: ${notification?.body}');
+
+    // Translate title and body to Arabic
+    String translatedTitle = _translateToArabic(notification?.title ?? '');
+    String translatedBody = _translateToArabic(notification?.body ?? '');
+
+    // Print the translated title and body
+    print('Translated Title: $translatedTitle');
+    print('Translated Body: $translatedBody');
+  } else {
+    debugPrint('Notification is null');
+  }
+
+  // Check if the message contains data
+  if (message.data.isNotEmpty) {
+    debugPrint('Message data: ${message.data}');
+    print('Message Data: ${message.data}');
+  } else {
+    debugPrint('Message data is empty');
+  }
+}
+
+String _translateToArabic(String text) {
+  Map<String, String> translations = {
+    "new request": "طلب جديد",
+    "a new request created in this region. click here":
+        "تم إنشاء طلب جديد في هذه المنطقة. انقر هنا",
+  };
+
+  // Normalize the input text
+  text = text.toLowerCase().trim();
+
+  if (translations.containsKey(text)) {
+    return translations[text]!;
+  }
+  return text; // Return the original text if no translation exists
 }
 
 setPreferencesForParcelCollected() async {
@@ -82,8 +133,6 @@ Future<void> initNotifications() async {
 Future<void> runInBackground() async {
   await initializeService();
 }
-
-
 
 Future<void> initializeService() async {
   final service = FlutterBackgroundService();
@@ -522,6 +571,15 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+void changeLanguage(String languageCode) {
+  // Set the new language locale
+  if (languageCode == "en") {
+    LocalizationService.changeLocale(const Locale('en'));
+  } else if (languageCode == "ar") {
+    LocalizationService.changeLocale(const Locale('ar'));
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
@@ -537,13 +595,11 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
-  requestLocationPermission();
-  // await initializeService();
+  // requestLocationPermission();
+  await initializeService();
 
   runApp(const CargoDeleiveryApp());
 }
-
-
 
 Future<void> requestLocationPermission() async {
   PermissionStatus status = await Permission.location.request();
@@ -660,6 +716,17 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
       minTextAdapt: true,
       builder: (_, child) {
         return GetMaterialApp(
+          translations: LocalizedTranslations(),
+          // Use the wrapper class
+          locale: Get.deviceLocale,
+          // Set the default locale
+          fallbackLocale: const Locale('en'),
+          supportedLocales: const [Locale('en'), Locale('ar')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
           initialBinding: Binding(),
           themeMode: ThemeMode.light,
           theme: ThemeData(
@@ -682,7 +749,7 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
               } else {
                 if (_initialMessage == null) {
                   Get.offAll(() => Get.find<AuthController>().isLogedIn()
-                      ? const LocationPage()
+                      ? LocationPage()
                       : const WelcomeScreen());
                 }
               }

@@ -45,7 +45,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
                     SizedBox(height: 10.h),
                     Center(
                       child: Text(
-                        "OTP Verification",
+                        "OTP Verification".tr,
                         style: TextStyle(
                             fontSize: 32.sp,
                             fontWeight: FontWeight.bold,
@@ -55,7 +55,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
                     SizedBox(height: 10.h),
                     Center(
                         child: Text(
-                      "Please Check Your Mobile \nto See The Verification Code",
+                      "Please Check Your Mobile \nto See The Verification Code".tr,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 16.sp,
@@ -66,7 +66,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
                     Padding(
                       padding: const EdgeInsets.only(left: 20),
                       child: Text(
-                        "OTP Code",
+                        "OTP Code".tr,
                         style: TextStyle(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.bold,
@@ -115,13 +115,13 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
                       ),
                     ),
                     SizedBox(height: 40.h),
-                    CustomButton(buttonText: "Verify", onPress: () {}),
+                    CustomButton(buttonText: "Verify".tr, onPress: () {}),
                     SizedBox(height: 20.h),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Resend code",
+                          "Resend code".tr,
                           style: TextStyle(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w500,

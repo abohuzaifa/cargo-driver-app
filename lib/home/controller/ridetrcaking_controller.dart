@@ -160,7 +160,8 @@ class RideTrackingController extends GetxController implements GetxService {
       required String long,
       String? address,
       required String isStart,
-      required String isEnd}) async {
+      required String isEnd}) async
+  {
     var response = await userRepo.createRideHistory(
         requestId: requestId,
         lat: lat,
@@ -198,9 +199,10 @@ class RideTrackingController extends GetxController implements GetxService {
 
   Future<void> setPolyLines({
     required LatLng sourceLocation,
-    required LatLng destinationLocation,
+    // required LatLng destinationLocation,
     required LatLng currentLocation,
-  }) async {
+  }) async
+  {
     String apiKey = "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko";
 
     try {
@@ -217,17 +219,17 @@ class RideTrackingController extends GetxController implements GetxService {
           decodeEncodedPolyline(currentToSourceEncodedPoints);
 
       // Request route from source to destination
-      var sourceToDestinationResponse = await http.get(Uri.parse(
-          'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
-      var sourceToDestinationData =
-          jsonDecode(sourceToDestinationResponse.body);
-      if (sourceToDestinationData['routes'].isEmpty) {
-        throw Exception('No routes found from source to destination.');
-      }
-      var sourceToDestinationEncodedPoints =
-          sourceToDestinationData['routes'][0]['overview_polyline']['points'];
-      var sourceToDestinationPoints =
-          decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+      // var sourceToDestinationResponse = await http.get(Uri.parse(
+      //     'https://maps.googleapis.com/maps/api/directions/json?origin=${sourceLocation.latitude},${sourceLocation.longitude}&destination=${destinationLocation.latitude},${destinationLocation.longitude}&key=$apiKey'));
+      // var sourceToDestinationData =
+      //     jsonDecode(sourceToDestinationResponse.body);
+      // if (sourceToDestinationData['routes'].isEmpty) {
+      //   throw Exception('No routes found from source to destination.');
+      // }
+      // var sourceToDestinationEncodedPoints =
+      //     sourceToDestinationData['routes'][0]['overview_polyline']['points'];
+      // var sourceToDestinationPoints =
+         // decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
       // Add current location to pathPoints
       pathPoints.add(currentLocation);
@@ -236,7 +238,7 @@ class RideTrackingController extends GetxController implements GetxService {
       pathPoints.addAll(currentToSourcePoints);
 
       // Add points from source to destination
-      pathPoints.addAll(sourceToDestinationPoints);
+    //  pathPoints.addAll(sourceToDestinationPoints);
 
       polylines.add(Polyline(
         polylineId: const PolylineId('poly'),
@@ -341,22 +343,22 @@ class RideTrackingController extends GetxController implements GetxService {
     double? receiverLong1 = double.tryParse(receiverLong ?? '');
 
     LatLng sourceLocation = LatLng(parcelLat1!, parcelLong1!);
-    LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
+    // LatLng destinationLocation = LatLng(receiverLat1!, receiverLong1!);
     // userLatitude.value = destinationLocation.latitude;
     // userLongitude.value = destinationLocation.longitude;
 
     // Print source and destination locations
     print('Source Location: $sourceLocation');
-    print('Destination Location: $destinationLocation');
+    // print('Destination Location: $destinationLocation');
 
     await setPolyLines(
       currentLocation: LatLng(latitude.value, longitude.value),
       sourceLocation: sourceLocation,
-      destinationLocation: destinationLocation,
+      // destinationLocation: destinationLocation,
     );
     update();
     updateDriverMarker(LatLng(latitude.value, longitude.value));
-    addMarkers(sourceLocation, destinationLocation);
+    // addMarkers(sourceLocation, destinationLocation);
 
     update();
   }
