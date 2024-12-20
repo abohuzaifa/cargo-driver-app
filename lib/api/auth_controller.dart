@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:cargo_driver_app/home/confirm_location_screen.dart';
+import 'package:cargo_driver_app/main.dart';
 import 'package:cargo_driver_app/util/apputils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../api/api_constants.dart';
 
@@ -71,8 +73,8 @@ class AuthController extends GetxController implements GetxService {
       password: password,
       mobileNumber: mobileNumber,
       userType: userType,
-      fcmToken: fcmToken,
-    );
+     
+        fcmToken:  fcmToken,);
 
     // Debug: Log the entire response
     log('API Response: $response');

@@ -58,12 +58,12 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCQREp5_Ddt9tTvC7c4bTp2T2PEM6MBkt8',
-    appId: '1:705442055445:ios:85a0a4dc35a7332753151c',
-    messagingSenderId: '705442055445',
-    projectId: 'cargo-driver-app-8bedd',
-    storageBucket: 'cargo-driver-app-8bedd.appspot.com',
-    iosBundleId: 'com.iOS.cargoDriverApp',
+    apiKey: 'AIzaSyCJLxswhmOpwUX1Gjry2CakBe8jdlrvbvs',
+    appId: '1:990392568575:ios:2a18ea6eaeefd4c5a09aca',
+    messagingSenderId: '990392568575',
+    projectId: 'cargo-driver-app-a6c10',
+    storageBucket: 'cargo-driver-app-a6c10.firebasestorage.app',
+    iosBundleId: 'com.tarudDriver.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

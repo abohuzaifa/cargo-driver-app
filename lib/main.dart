@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
 import 'package:cargo_driver_app/api/auth_repo.dart';
+import 'package:cargo_driver_app/firebase_options.dart';
 import 'package:cargo_driver_app/splash_screen.dart';
 import 'package:cargo_driver_app/welcome_screen.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -17,6 +18,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api/auth_controller.dart';
 import 'bindings/contorller_binding.dart';
@@ -110,24 +112,45 @@ var latitude = Rx<double>(0.0);
 var longitude = Rx<double>(0.0);
 
 Future<String?> getFCMToken() async {
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  try {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
-  // Request permission to receive notifications
-  await messaging.requestPermission();
-
-  // Get the token
-  String? token = await messaging.getToken();
-  fcmToken = token;
-  print('fcmToken==${fcmToken}');
-  return token;
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      if (Platform.isIOS) {
+        String? apnsToken = await messaging.getAPNSToken();
+        await prefs.setString('fcm_token', fcmToken ?? '');
+        fcmToken = apnsToken;
+        print('APNs Token: $apnsToken');
+        return fcmToken;
+      } else {
+        String? token = await messaging.getToken();
+        fcmToken = token;
+        await prefs.setString('fcm_token', fcmToken ?? '');
+        print('FCM Token: $token');
+      }
+    } else {
+      print('Notification permissions not granted');
+    }
+  } catch (e) {
+    print('Error fetching token: $e');
+  }
+  return fcmToken; // Return the FCM token
 }
 
 final _firebaseMessaging = FirebaseMessaging.instance;
 
 Future<void> initNotifications() async {
-  await _firebaseMessaging.requestPermission();
-  final fcmToken = await _firebaseMessaging.getToken();
-  print('token=====${fcmToken}');
+  await _firebaseMessaging.requestPermission(
+    alert: true,
+  );
+  // final fcmToken = await _firebaseMessaging.getToken();
+  print('token=====$fcmToken');
 }
 
 Future<void> runInBackground() async {
@@ -414,7 +437,9 @@ void onStart(ServiceInstance service) async {
       print(
           'Position obtained: latitude=${position!.latitude}, longitude=${position!.longitude}');
       await createHistory(
-          isStart: isStart!, isEnd: isEnd!, isProceed: isProceed!);
+          isStart: isStart ?? '',
+          isEnd: isEnd ?? '',
+          isProceed: isProceed ?? '');
     } catch (e) {
       print('Error obtaining position: $e');
       return;
@@ -501,7 +526,7 @@ Future<bool> createHistory(
     required String isProceed}) async {
   position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high);
-  print('position==${position}');
+  print('position==$position');
   address.value = await getAddress(position!.latitude, position!.longitude);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? requestId = prefs.getString('request_id');
@@ -523,7 +548,7 @@ Future<bool> createHistory(
   });
   print(
       'Get.find<AuthController>().authRepo.getAuthToken()======${Get.find<AuthController>().authRepo.getAuthToken()}');
-  print('body=${body}');
+  print('body=$body');
 
   try {
     final response = await http.post(url, headers: headers, body: body);
@@ -555,7 +580,7 @@ void startBackgroundService() {
   platform.invokeMethod('startService').then((value) {
     // Handle success case
     print('Background service started successfully');
-    print('value=========${value}');
+    print('value=========$value');
   }).catchError((e) {
     // Handle error case
     print('Error starting background service: $e');
@@ -584,9 +609,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
   // Initialize Firebase
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp();
-  }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   await getFCMToken();
   await initNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -663,14 +689,8 @@ class _CargoDeleiveryAppState extends State<CargoDeleiveryApp>
     print('Last Request URL: $lastRequestUrl');
     print('Last Request Headers: $lastRequestHeaders');
     print('Last Request Body: $lastRequestBody');
-    if (lastResponseStatusCode != null) {
-      print('Last Response Status Code: $lastResponseStatusCode');
-      print('Last Response Body: $lastResponseBody');
-    } else if (lastRequestException != null) {
-      print('Last Request Exception: $lastRequestException');
-    } else {
-      print('No response or exception stored.');
-    }
+    print('Last Response Status Code: $lastResponseStatusCode');
+    print('Last Response Body: $lastResponseBody');
   }
 
   void _setupInteractedMessage() async {

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cargo_driver_app/api/auth_controller.dart';
 import 'package:cargo_driver_app/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth_screen/forgot_password.dart';
 import '../../auth_screen/register_screen.dart';
@@ -127,12 +128,13 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 25.h),
                   CustomButton(
+                      buttonText: "Login",
+                      onPress: () async {
                       buttonText: "Login".tr,
                       onPress: () {
                         if (_formKey.currentState!.validate()) {
                           Get.find<AuthController>().login(
-                            userType: '2',
-                              fcmToken: fcmToken!,
+                              userType: '2',
                               password: passwordController.text,
                               mobileNumber:
                                   _code.value + _phoneConteroller.text);
