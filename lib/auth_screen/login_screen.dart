@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:cargo_driver_app/api/auth_controller.dart';
 import 'package:cargo_driver_app/main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../auth_screen/forgot_password.dart';
 import '../../auth_screen/register_screen.dart';
@@ -77,7 +76,8 @@ class LoginScreen extends StatelessWidget {
                   ContactField(
                     validator: (p0) {
                       if (p0!.isEmpty || p0.length < 9) {
-                        return 'Enter valid phone mumber without country code'.tr;
+                        return 'Enter valid phone mumber without country code'
+                            .tr;
                       }
                       return null;
                     },
@@ -128,12 +128,11 @@ class LoginScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 25.h),
                   CustomButton(
-                      buttonText: "Login",
-                      onPress: () async {
                       buttonText: "Login".tr,
                       onPress: () {
                         if (_formKey.currentState!.validate()) {
                           Get.find<AuthController>().login(
+                              fcmToken: fcmToken!,
                               userType: '2',
                               password: passwordController.text,
                               mobileNumber:
