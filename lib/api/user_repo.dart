@@ -106,6 +106,8 @@ class UserRepo {
     required String from,
     required String to,
     required String date,
+    required String description,
+    required String price,
     required String time,
   }) async {
     APISTRUCTURE apiObject = APISTRUCTURE(
@@ -117,6 +119,8 @@ class UserRepo {
         "to": to,
         "date": date,
         "time": time,
+        "price": price,
+        "description": description,
       }),
     );
     return await apiObject.requestAPI(

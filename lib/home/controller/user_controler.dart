@@ -12,24 +12,46 @@ class UserContorller extends GetxController implements GetxService {
 
   var walletData = Rx<WalletModel?>(null);
   var currenTRideModel = Rx<CurrentRideModel?>(null);
+
   addDriverTrip({
     required String from,
     required String to,
     required String date,
     required String time,
+    required String description,
+    required String price,
   }) async {
-    var response = await userRepo.addDriverTrip(
-        from: from, to: to, date: date, time: time);
-    if (response.containsKey(APIRESPONSE.SUCCESS)) {
-      AppUtils.showDialog('Successfully created', () {
-        Get.back();
-        Get.back();
-      });
-    } else {
-      AppUtils.showDialog('Something went wrong please, Try again', () {
-        Get.back();
-        Get.back();
-      });
+    try {
+      var response = await userRepo.addDriverTrip(
+          from: from,
+          to: to,
+          date: date,
+          time: time,
+          description: description,
+          price: price);
+
+      if (response.containsKey(APIRESPONSE.SUCCESS)) {
+        AppUtils.showDialog('Successfully created'.tr, () {
+          Get.back();
+          Get.back();
+        });
+      } else if (response.containsKey('errors')) {
+        // Parse and display errors
+        Map<String, dynamic> errors = response['errors'];
+        String errorMessages = errors.entries
+            .map((entry) =>
+                "${entry.key.capitalizeFirst}: ${entry.value.join(', ')}")
+            .join('\n');
+
+        AppUtils.showDialog('Validation Errors:\n$errorMessages', () {
+          Get.back();
+        });
+      } else {
+        AppUtils.showDialog('Something went wrong, please try again', () {});
+      }
+    } catch (e) {
+      // Handle unexpected exceptions
+      AppUtils.showDialog('An unexpected error occurred: $e', () {});
     }
   }
 
@@ -102,7 +124,7 @@ class UserContorller extends GetxController implements GetxService {
         long: long);
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
       AppUtils.showDialog('Data Updated', () {
-        Get.offAll(()=>LoginScreen());
+        Get.offAll(() => LoginScreen());
       });
     } else {
       AppUtils.showDialog(response['message'], () {

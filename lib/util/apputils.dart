@@ -28,7 +28,7 @@ sealed class AppUtils {
         actions: [
           CupertinoDialogAction(
             onPressed: onPress,
-            child: const Text('Ok'),
+            child:  Text('Ok'.tr),
           )
         ],
       ),

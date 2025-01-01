@@ -609,9 +609,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp();
+  }
 
   await getFCMToken();
   await initNotifications();

@@ -17,4 +17,5 @@ class FindTripController extends GetxController implements GetxService {
     }
     return response;
   }
+
 }

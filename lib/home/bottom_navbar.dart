@@ -12,6 +12,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constant/colors_utils.dart';
 import '../more/more_view.dart';
 import 'chat/chat_page.dart';
+import 'home_screen.dart';
 
 class BottomBarScreen extends StatefulWidget {
   const BottomBarScreen({Key? key}) : super(key: key);
@@ -25,7 +26,7 @@ class _BottomBarScreenState extends State<BottomBarScreen> {
   late PageController _pageController;
 
   final List<Widget> _pages = [
-    FindTripOnline(),
+    HomeScreen(),
     WalletView(),
     const AllTripsPage(),
     ChatPage(),

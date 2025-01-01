@@ -36,7 +36,7 @@ class WalletModel {
       _currentEarning = currentEarning;
 
   WalletModel.fromJson(Map<String, dynamic> json) {
-    _earnings = json['earnings'];
+    _earnings = json['earnings']?.toString(); // Safely convert to String
     _withdral = json['withdral'];
     _balance = json['balance'];
     _currentEarning = json['current_earning'] != null

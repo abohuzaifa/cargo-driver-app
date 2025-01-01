@@ -1,9 +1,9 @@
-import 'package:cargo_driver_app/alltrips/add_trip_page.dart';
 import 'package:cargo_driver_app/alltrips/find_trip_page.dart';
-
 import 'package:cargo_driver_app/api/user_repo.dart';
 import 'package:cargo_driver_app/home/controller/user_controler.dart';
 import '../../constant/colors_utils.dart';
+import '../alltrips/add_trip/add_trip_view.dart';
+import 'driver_request_notification_screen.dart';
 import 'find_trip_online.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -67,7 +67,7 @@ class HomeScreen extends StatelessWidget {
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     Text(
-                                      "Earn More Money with Tarrud",
+                                      "Earn More Money with Tarrud".tr,
                                       style: TextStyle(
                                           fontSize: 22.sp,
                                           fontWeight: FontWeight.bold,
@@ -79,7 +79,7 @@ class HomeScreen extends StatelessWidget {
                                       children: [
                                         InkWell(
                                           onTap: () {
-                                            Get.to(() =>  FindTripOnline());
+                                            Get.to(() => FindTripOnline());
                                           },
                                           child: Container(
                                               margin: const EdgeInsets.all(5),
@@ -92,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                                                       BorderRadius.circular(
                                                           20)),
                                               child: Text(
-                                                "Online",
+                                                "Online".tr,
                                                 style: TextStyle(
                                                     fontSize: 14.sp,
                                                     fontWeight: FontWeight.bold,
@@ -144,7 +144,7 @@ class HomeScreen extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          "Current Ride",
+                                          "Current Ride".tr,
                                           style: TextStyle(
                                               fontSize: 22.sp,
                                               fontWeight: FontWeight.bold,
@@ -163,7 +163,8 @@ class HomeScreen extends StatelessWidget {
                                     Expanded(
                                       child: InkWell(
                                         onTap: () {
-                                          Get.to(() =>  FindTripOnline());
+                                          // Get.to(() => FindTripOnline());
+                                          Get.to(()=>DriverRequestNotificationScreen());
                                         },
                                         child: Container(
                                             margin: const EdgeInsets.all(5),
@@ -175,7 +176,7 @@ class HomeScreen extends StatelessWidget {
                                                 borderRadius:
                                                     BorderRadius.circular(20)),
                                             child: Text(
-                                              "Track",
+                                              "Track".tr,
                                               style: TextStyle(
                                                   fontSize: 14.sp,
                                                   fontWeight: FontWeight.bold,
@@ -279,9 +280,9 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Column(
                         children: [
-                          const Text('ADD YOUR TRIP'),
+                           Text('ADD YOUR TRIP'.tr),
                           InkWell(
-                            onTap: () => Get.to(() => AddTripPage()),
+                            onTap: () => Get.to(() => AddTripView()),
                             child: Container(
                               padding: EdgeInsets.all(20.h),
                               decoration: const BoxDecoration(
@@ -294,7 +295,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       Column(
                         children: [
-                          const Text('FIND YOUR TRIP'),
+                           Text('FIND YOUR TRIP'.tr),
                           InkWell(
                             onTap: () => Get.to(() => FindTripPage()),
                             child: Container(
@@ -333,14 +334,14 @@ class HomeScreen extends StatelessWidget {
                                     fontSize: 20.sp, color: Colors.white))
                           ]),
                         ),
-                        const Text(
-                          'Total Earning',
+                         Text(
+                          'Total Earning'.tr,
                           style: TextStyle(color: Color(0xff9DADB8)),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Current Earning',
+                             Text('Current Earning'.tr,
                                 style: TextStyle(color: Color(0xff9DADB8))),
                             Text(
                                 'SAR ${contoroller.walletData.value?.currentEarning?.amount ?? ''}',
@@ -350,8 +351,8 @@ class HomeScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Total Withdrawl',
+                             Text(
+                              'Total Withdrawl'.tr,
                               style: TextStyle(color: Color(0xff9DADB8)),
                             ),
                             Text(

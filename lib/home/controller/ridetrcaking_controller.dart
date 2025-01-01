@@ -160,8 +160,7 @@ class RideTrackingController extends GetxController implements GetxService {
       required String long,
       String? address,
       required String isStart,
-      required String isEnd}) async
-  {
+      required String isEnd}) async {
     var response = await userRepo.createRideHistory(
         requestId: requestId,
         lat: lat,
@@ -201,8 +200,7 @@ class RideTrackingController extends GetxController implements GetxService {
     required LatLng sourceLocation,
     // required LatLng destinationLocation,
     required LatLng currentLocation,
-  }) async
-  {
+  }) async {
     String apiKey = "AIzaSyDdwlGhZKKQqYyw9f9iME40MzMgC9RL4ko";
 
     try {
@@ -229,7 +227,7 @@ class RideTrackingController extends GetxController implements GetxService {
       // var sourceToDestinationEncodedPoints =
       //     sourceToDestinationData['routes'][0]['overview_polyline']['points'];
       // var sourceToDestinationPoints =
-         // decodeEncodedPolyline(sourceToDestinationEncodedPoints);
+      // decodeEncodedPolyline(sourceToDestinationEncodedPoints);
 
       // Add current location to pathPoints
       pathPoints.add(currentLocation);
@@ -238,7 +236,7 @@ class RideTrackingController extends GetxController implements GetxService {
       pathPoints.addAll(currentToSourcePoints);
 
       // Add points from source to destination
-    //  pathPoints.addAll(sourceToDestinationPoints);
+      //  pathPoints.addAll(sourceToDestinationPoints);
 
       polylines.add(Polyline(
         polylineId: const PolylineId('poly'),
@@ -403,7 +401,7 @@ class RideTrackingController extends GetxController implements GetxService {
     var response =
         await userRepo.bidOnUserRequest(requestId: requestId, amount: amount);
     if (response.containsKey(APIRESPONSE.SUCCESS)) {
-      Get.offAll(() => const DriverRequestNotificationScreen());
+      Get.to(() => const DriverRequestNotificationScreen());
     }
   }
 
